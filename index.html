@@ -187,7 +187,37 @@ async function initAuth(){
 }
 async function logout(){currentUser=null;page='login';if(authClient)await authClient.auth.signOut();showLogin('login','You have signed out.');}
 function activitiesPage(){let items=[...db.activities].sort((a,b)=>(a.date||'').localeCompare(b.date||''));return `<h3 class="sectiontitle">School Activities & Programs</h3><p class="sectiondesc">A shared calendar for upcoming school activities, project milestones, meetings, and partner-agency programs.</p><div class="toolbar"><input id="search" placeholder="Search activities, venues or organizers…" value="${esc(query)}"><select id="statusFilter"><option>All</option>${['Upcoming','Planning','Completed','Cancelled'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select>${currentUser.role==='Administrator'?'<button data-action="add-activity">+ Add activity</button>':''}<button class="secondary" data-action="export-activities">Export CSV</button></div><div class="panel"><div class="panelhead"><div><h3>Calendar and announcements</h3><p>Confirm dates and details with the activity organizer.</p></div><span class="pill">${items.length} activities</span></div>${items.filter(a=>(filter==='All'||a.status===filter)&&JSON.stringify(a).toLowerCase().includes(query.toLowerCase())).map(a=>{let d=new Date((a.date||today())+'T12:00:00');return `<div class="eventcard"><div class="datebox"><b>${isNaN(d)?'—':d.getDate()}</b><small>${isNaN(d)?'Date':d.toLocaleString('en',{month:'short'})}</small></div><div class="eventbody"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h4>${esc(a.title)}</h4>${statusPill(a.status)}</div><p>${esc(a.description||'No description provided.')}</p><div style="font-size:11px;color:var(--muted)">📅 ${esc(a.date)} • ${esc(a.time||'Time TBA')} &nbsp; · &nbsp; 📍 ${esc(a.venue||'Venue TBA')}<br>Organizer: ${esc(a.organizer||'Not assigned')} • Audience: ${esc(a.audience||'Not specified')}</div>${currentUser.role==='Administrator'?`<div class="actions" style="margin-top:9px"><button class="secondary" data-edit-activity="${a.id}">Edit</button><button class="danger" data-delete-activity="${a.id}">Delete</button></div>`:''}</div></div>`}).join('')||'<div class="empty">No activities match your search.</div>'}</div>`}
-function communityPage(){let names=Object.keys(db.chats);let msgs=db.chats[currentChat]||[];return `<h3 class="sectiontitle">Partner Communication</h3><p class="sectiondesc">Coordinate activities, share project updates, and collaborate with partner agencies.</p> Keep confidential or sensitive information out of this prototype.</p><div class="chatlayout"><div class="chatlist"><div style="font-size:10px;letter-spacing:1px;font-weight:800;color:var(--muted);padding:8px">CONVERSATIONS</div>${names.map(n=>`<button class="chatcontact ${n===currentChat?'active':''}" data-chat="${esc(n)}"><span class="contactavatar">${esc(n.slice(0,1))}</span><span class="contactmeta"><b>${esc(n)}</b><small>${(db.chats[n]||[]).length} messages</small></span></button>`).join('')}${currentUser.role==='Administrator'?'<button class="secondary" style="width:100%;margin-top:10px" data-action="add-chat">+ New channel</button>':''}</div><div class="chatwindow"><div class="chathead">${esc(currentChat)} <span class="rolechip" style="float:right">${esc(currentUser.role)}</span></div><div class="chatmessages" id="chatmessages">${msgs.map(m=>`<div class="bubble ${m.sender===currentUser.name?'mine':''}"><strong>${esc(m.sender)}</strong><div>${esc(m.text)}</div><small>${esc(m.time||'')}</small></div>`).join('')||'<div class="empty">No messages yet. Start the conversation.</div>'}</div><form class="chatcompose" id="chatForm"><input name="message" placeholder="Write a message…" required maxlength="1000"><button>Send</button></form></div></div>`}
+
+function communityPage(){
+  let names=Object.keys(db.chats);
+  let msgs=db.chats[currentChat]||[];
+
+  return `<h3 class="sectiontitle">Partner Communication</h3>
+  <p class="sectiondesc">Coordinate activities, share project updates, and collaborate with partner agencies.</p>
+  <div class="notice">Messages are currently saved only in this browser. Shared messaging and real-time delivery will be available after the system is connected to a shared backend.</div>
+  <div class="chatlayout">
+    <div class="chatlist">
+      <div style="font-size:10px;letter-spacing:1px;font-weight:800;color:var(--muted);padding:8px">CONVERSATIONS</div>
+      ${names.map(n=>`<button class="chatcontact ${n===currentChat?'active':''}" data-chat="${esc(n)}">
+        <span class="contactavatar">${esc(n.slice(0,1))}</span>
+        <span class="contactmeta"><b>${esc(n)}</b><small>${(db.chats[n]||[]).length} messages</small></span>
+      </button>`).join('')}
+      ${currentUser.role==='Administrator'?'<button class="secondary" style="width:100%;margin-top:10px" data-action="add-chat">+ New channel</button>':''}
+    </div>
+    <div class="chatwindow">
+      <div class="chathead">${esc(currentChat)} <span class="rolechip" style="float:right">${esc(currentUser.role)}</span></div>
+      <div class="chatmessages" id="chatmessages">
+        ${msgs.map(m=>`<div class="bubble ${m.sender===currentUser.name?'mine':''}">
+          <strong>${esc(m.sender)}</strong><div>${esc(m.text)}</div><small>${esc(m.time||'')}</small>
+        </div>`).join('')||'<div class="empty">No messages yet. Start the conversation.</div>'}
+      </div>
+      <form class="chatcompose" id="chatForm">
+        <input name="message" placeholder="Write a message…" required maxlength="1000">
+        <button>Send</button>
+      </form>
+    </div>
+  </div>`;
+}
 function usersPage(){if(currentUser.role!=='Administrator')return `<h3 class="sectiontitle">Users & Access</h3><div class="notice">Administrator access is required to manage registered accounts.</div>`;return `<h3 class="sectiontitle">Users & Access</h3><p class="sectiondesc">Real accounts registered through Supabase Authentication. Approve account requests and assign an application role below.</p><div class="notice">New users must register from the sign-in page first. This page does not create passwords or send invitations.</div><div id="realUsersDirectory"><p>Loading registered accounts from Supabase…</p></div><div class="notice" style="margin-top:16px">Roles: Administrator, School Administrator, Project Coordinator, School Personnel, Records Officer, and Partner Agency. Approval controls workspace entry; role-based permissions for every data feature must also be enforced by database policies.</div>`}
 async function loadUsersDirectory(){
  const host=$('#realUsersDirectory');if(!host||!authClient||currentUser?.role!=='Administrator')return;
