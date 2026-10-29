@@ -1,1145 +1,140 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Project e-NEXUS | Aliaga District</title>
-  <meta name="description" content="Project e-NEXUS, the school services and stakeholder transactions portal for Aliaga District, Nueva Ecija.">
-
-  <style>
-    :root {
-      --navy: #12345a;
-      --blue: #1d5fa7;
-      --light: #f3f6fb;
-      --white: #ffffff;
-      --text: #253348;
-      --muted: #65748b;
-      --border: #dce4ef;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      background: var(--light);
-      line-height: 1.6;
-    }
-
-    header {
-      background: var(--navy);
-      color: var(--white);
-      padding: 22px 6%;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .logo {
-      display: grid;
-      place-items: center;
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: var(--white);
-      color: var(--navy);
-      font-size: 22px;
-      font-weight: bold;
-    }
-
-    h1, h2, h3, p {
-      margin-top: 0;
-    }
-
-    .brand h1 {
-      margin-bottom: 2px;
-      font-size: 22px;
-    }
-
-    .brand p {
-      margin-bottom: 0;
-      color: #d9e8fb;
-      font-size: 14px;
-    }
-
-    main {
-      max-width: 1150px;
-      margin: 0 auto;
-      padding: 32px 20px 50px;
-    }
-
-    .notice {
-      padding: 12px 16px;
-      margin-bottom: 24px;
-      border: 1px solid #e9d49b;
-      border-radius: 10px;
-      background: #fff8e6;
-      color: #765719;
-      font-size: 14px;
-    }
-
-    .welcome {
-      padding: 30px;
-      border-radius: 16px;
-      background: var(--white);
-      border: 1px solid var(--border);
-      margin-bottom: 28px;
-    }
-
-    .welcome h2 {
-      color: var(--navy);
-      font-size: 28px;
-      margin-bottom: 10px;
-    }
-
-    .welcome p {
-      max-width: 720px;
-      color: var(--muted);
-      margin-bottom: 0;
-    }
-
-    .section-title {
-      margin-bottom: 16px;
-      color: var(--navy);
-      font-size: 21px;
-    }
-
-    .modules {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 18px;
-    }
-
-    .module {
-      padding: 22px;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-    }
-
-    .module-icon {
-      display: grid;
-      place-items: center;
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: #eaf2fc;
-      font-size: 23px;
-      margin-bottom: 14px;
-    }
-
-    .module h3 {
-      color: var(--navy);
-      font-size: 17px;
-      margin-bottom: 8px;
-    }
-
-    .module p {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 0;
-    }
-
-    .access {
-      margin-top: 28px;
-      padding: 24px;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-    }
-
-    .access h2 {
-      color: var(--navy);
-      font-size: 20px;
-    }
-
-    .access p {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .contact {
-      margin-top: 28px;
-      padding: 22px;
-      background: #e8eff8;
-      border-radius: 12px;
-    }
-
-    .contact h2 {
-      font-size: 18px;
-      color: var(--navy);
-    }
-
-    .contact p {
-      margin-bottom: 0;
-      font-size: 14px;
-    }
-
-    footer {
-      padding: 22px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    @media (max-width: 800px) {
-      .modules {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-
-    @media (max-width: 520px) {
-      .modules {
-        grid-template-columns: 1fr;
-      }
-
-      .welcome {
-        padding: 22px;
-      }
-
-      .welcome h2 {
-        font-size: 23px;
-      }
-
-      header {
-        padding: 20px;
-      }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project e-NEXUS | Unified School Services</title>
+<style>
+:root{--navy:#12345a;--blue:#1e5b91;--gold:#e5b54b;--bg:#f3f6fa;--ink:#1c2b3a;--muted:#66788a;--line:#dbe3ec;--white:#fff;--green:#18794e;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:650}button.secondary{background:#e8eef5;color:var(--navy);border:1px solid var(--line)}button.danger{background:#fff0ef;color:var(--red);border:1px solid #ffd3cf}.app{min-height:100vh;display:grid;grid-template-columns:250px 1fr}.sidebar{background:var(--navy);color:#fff;padding:24px 16px;display:flex;flex-direction:column;gap:18px}.brand{display:flex;gap:12px;align-items:center;padding:4px 8px 20px;border-bottom:1px solid #ffffff2b}.brandmark{width:42px;height:42px;border-radius:12px;background:var(--gold);color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:20px}.brand h1{font-size:17px;line-height:1.15;margin:0}.brand small{display:block;font-size:11px;font-weight:500;opacity:.75;margin-top:5px}.navlabel{font-size:10px;letter-spacing:1.6px;color:#b8cadc;margin:8px 10px 0}.navbtn{width:100%;display:flex;align-items:center;gap:11px;text-align:left;background:transparent;color:#e8f0f8;padding:12px;border-radius:10px;font-weight:600}.navbtn.active,.navbtn:hover{background:#ffffff1c;color:white}.navbtn span{width:20px;text-align:center}.sidebarfoot{margin-top:auto;font-size:11px;color:#b8cadc;line-height:1.5;padding:12px}.main{min-width:0}.topbar{height:76px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 30px;gap:16px}.eyebrow{font-size:11px;letter-spacing:1.3px;color:var(--blue);font-weight:800;text-transform:uppercase}.topbar h2{font-size:20px;margin:4px 0 0}.topright{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px}.avatar{width:36px;height:36px;border-radius:50%;background:#e8eef5;color:var(--navy);display:grid;place-items:center;font-weight:800}.content{padding:26px 30px;max-width:1500px;margin:auto}.welcome{background:linear-gradient(115deg,#12345a,#236da3);border-radius:18px;padding:26px 28px;color:white;display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}.welcome h3{font-size:24px;margin:6px 0 8px}.welcome p{margin:0;max-width:700px;color:#e2edf7;line-height:1.5}.welcome .tag{font-size:11px;letter-spacing:1px;color:#ffdf8a;font-weight:800}.welcome .welcomeicon{font-size:54px;opacity:.9}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:18px 0 22px}.stat,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:19px}.stat .label{font-size:12px;color:var(--muted);font-weight:650}.stat .value{font-size:30px;font-weight:800;margin:9px 0 4px;color:var(--navy)}.stat .hint{font-size:11px;color:var(--muted)}.twocol{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}.panelhead h3{margin:0;font-size:16px}.panelhead p{margin:5px 0 0;font-size:12px;color:var(--muted)}.pill{display:inline-flex;align-items:center;padding:5px 9px;border-radius:99px;font-size:11px;font-weight:750;background:#e8eef5;color:#35516c}.pill.green{background:#e3f6eb;color:#176b43}.pill.amber{background:#fff3d6;color:#855b00}.pill.red{background:#ffebe9;color:#a5261d}.bar{height:7px;background:#e9eef4;border-radius:20px;overflow:hidden;margin:8px 0}.bar span{height:100%;display:block;background:#2f83b7;border-radius:20px}.quickgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.quick{padding:15px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}.quick strong{display:block;margin:8px 0 5px;font-size:13px}.quick p{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.4}.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}.toolbar input,.toolbar select{max-width:300px;flex:1}.field,input,select,textarea{width:100%;border:1px solid #ccd7e2;border-radius:8px;padding:10px 11px;background:white;color:var(--ink)}.toolbar input{min-width:180px}.tablewrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:13px 14px;text-align:left;border-bottom:1px solid #e8edf2;font-size:12px;vertical-align:top}th{background:#f8fafc;color:#53687c;font-size:10px;text-transform:uppercase;letter-spacing:.7px}tr:last-child td{border-bottom:0}td strong{font-size:12px}td .sub{display:block;color:var(--muted);font-size:11px;margin-top:4px;line-height:1.4}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions button{font-size:11px;padding:7px 9px}.empty{text-align:center;padding:36px;color:var(--muted)}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.formgroup label{display:block;font-size:12px;font-weight:750;margin-bottom:6px;color:#42566a}.formgroup.full{grid-column:1/-1}.formgroup textarea{min-height:86px;resize:vertical}.formactions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}.notice{padding:12px 14px;border-radius:10px;background:#fff6df;color:#74520b;border:1px solid #f4dfaa;font-size:12px;line-height:1.5;margin-bottom:16px}.sectiontitle{font-size:22px;margin:0 0 6px}.sectiondesc{color:var(--muted);margin:0 0 20px;font-size:13px;line-height:1.5}.timeline{display:flex;flex-direction:column;gap:10px}.timelineitem{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px}.dot{width:9px;height:9px;border-radius:50%;background:var(--blue);margin-top:5px;flex:none}.timelineitem strong{font-size:12px}.timelineitem p{margin:4px 0 0;color:var(--muted);font-size:11px;line-height:1.5}.footer{text-align:center;color:#8190a0;font-size:11px;padding:25px}.toast{position:fixed;right:22px;bottom:22px;background:#153b5c;color:white;padding:13px 17px;border-radius:10px;box-shadow:0 8px 30px #122d4833;display:none;z-index:10}.modalback{position:fixed;inset:0;background:#10263e77;display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.modal{background:white;border-radius:16px;max-width:760px;width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 20px 70px #10263e44}.modal h3{margin:0 0 18px}.closex{float:right;background:#eef2f6;color:#28445e;padding:6px 10px}.reportbox{background:#f8fafc;border:1px solid var(--line);padding:18px;border-radius:12px;line-height:1.65;font-size:13px;white-space:pre-wrap}.hidden{display:none!important}
+ .loginbar{display:flex;align-items:center;gap:8px}.loginbar button{padding:8px 11px;font-size:11px}.eventcard{display:flex;gap:14px;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:white}.datebox{flex:none;width:58px;height:64px;border-radius:10px;background:#e8f0f8;color:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center}.datebox b{font-size:23px;line-height:1}.datebox small{font-size:10px;font-weight:800;text-transform:uppercase;margin-top:4px}.eventbody{flex:1;min-width:0}.eventbody h4{margin:2px 0 5px;font-size:14px}.eventbody p{font-size:12px;color:var(--muted);margin:0 0 7px;line-height:1.5}.chatlayout{display:grid;grid-template-columns:270px 1fr;min-height:490px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:white}.chatlist{border-right:1px solid var(--line);padding:12px}.chatcontact{width:100%;display:flex;gap:10px;align-items:center;text-align:left;background:white;color:var(--ink);padding:12px;border-radius:10px;margin:3px 0}.chatcontact.active,.chatcontact:hover{background:#edf4fa}.contactavatar{width:35px;height:35px;flex:none;border-radius:50%;background:#e5eef7;color:var(--navy);display:grid;place-items:center;font-weight:800}.contactmeta{min-width:0}.contactmeta b{display:block;font-size:12px}.contactmeta small{display:block;font-size:10px;color:var(--muted);margin-top:4px}.chatwindow{display:flex;flex-direction:column;min-width:0}.chathead{padding:15px;border-bottom:1px solid var(--line);font-weight:800;font-size:13px}.chatmessages{flex:1;min-height:280px;max-height:420px;overflow:auto;padding:16px;background:#f8fafc}.bubble{max-width:82%;padding:10px 12px;border-radius:12px;background:white;border:1px solid var(--line);margin:8px 0;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.bubble.mine{margin-left:auto;background:#e4f1fb;border-color:#c4dff3}.bubble small{display:block;color:var(--muted);font-size:10px;margin-top:5px}.chatcompose{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}.chatcompose input{min-width:0}.rolechip{display:inline-flex;padding:4px 8px;border-radius:99px;background:#e8eef5;color:#35516c;font-size:10px;font-weight:800}.loginoverlay{position:fixed;inset:0;z-index:50;background:#10263ee8;display:flex;align-items:center;justify-content:center;padding:18px}.loginbox{width:100%;max-width:440px;background:white;border-radius:18px;padding:28px;box-shadow:0 20px 80px #0004}.loginbrand{display:flex;gap:12px;align-items:center;margin-bottom:22px}.loginbox h2{font-size:22px;margin:0 0 7px}.loginbox p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px}.loginbox .formgroup{margin-bottom:13px}.demoaccount{background:#f6f8fb;border-radius:10px;padding:12px;margin-top:16px;font-size:11px;line-height:1.7;color:#526578}.modal .formgrid{margin-top:12px}
+@media(max-width:950px){.app{grid-template-columns:1fr}.sidebar{padding:12px;gap:8px}.brand{padding-bottom:12px}.navlabel,.sidebarfoot{display:none}.navrow{display:flex;overflow:auto;gap:5px}.navbtn{width:auto;white-space:nowrap;padding:10px}.topbar{padding:0 18px}.content{padding:18px}.stats{grid-template-columns:repeat(2,1fr)}.twocol{grid-template-columns:1fr}}
+@media(max-width:560px){.welcome{padding:20px}.welcome h3{font-size:20px}.welcomeicon{display:none}.stats{gap:9px}.stat{padding:13px}.stat .value{font-size:25px}.formgrid{grid-template-columns:1fr}.formgroup.full{grid-column:auto}.topright .rolelabel{display:none}.quickgrid{grid-template-columns:1fr}}
+</style>
 </head>
-
 <body>
-  <header>
-    <div class="brand">
-      <div class="logo" aria-hidden="true">N</div>
-      <div>
-        <h1>Project e-NEXUS</h1>
-        <p>Electronic Network for Excellence in Unified School Services</p>
-      </div>
-    </div>
-  </header>
-
-  <main>
-    <div class="notice" role="status">
-      <strong>Development preview:</strong>
-      Secure sign-in is connected. Other modules, data processing,
-      approvals, and notifications may still be under development.
-    </div>
-
-    <section class="welcome">
-      <h2>Welcome to Project e-NEXUS</h2>
-      <p>
-        A proposed digital platform for coordinating school services,
-        tracking documents, monitoring projects, and improving transactions
-        among schools and authorized partner agencies in Aliaga District,
-        Nueva Ecija.
-      </p>
-    </section>
-
-    <section aria-labelledby="modules-title">
-      <h2 class="section-title" id="modules-title">System Modules</h2>
-
-      <div class="modules">
-        <article class="module">
-          <div class="module-icon" aria-hidden="true">📄</div>
-          <h3>Document Routing and Tracking</h3>
-          <p>
-            Track submitted documents, assigned offices, review status,
-            approvals, and release records.
-          </p>
-        </article>
-
-        <article class="module">
-          <div class="module-icon" aria-hidden="true">📊</div>
-          <h3>Project Monitoring and Evaluation</h3>
-          <p>
-            Organize project proposals, milestones, progress reports,
-            accomplishments, and evaluation records.
-          </p>
-        </article>
-
-        <article class="module">
-          <div class="module-icon" aria-hidden="true">📝</div>
-          <h3>Online Requests and Approvals</h3>
-          <p>
-            Provide a structured process for submitting requests and
-            recording authorized decisions.
-          </p>
-        </article>
-
-        <article class="module">
-          <div class="module-icon" aria-hidden="true">📢</div>
-          <h3>Announcements and Circulars</h3>
-          <p>
-            Organize official announcements, memoranda, circulars,
-            and school advisories.
-          </p>
-        </article>
-
-        <article class="module">
-          <div class="module-icon" aria-hidden="true">💬</div>
-          <h3>Stakeholder Inquiries</h3>
-          <p>
-            Provide a channel for authorized users and community partners
-            to submit inquiries and track responses.
-          </p>
-        </article>
-
-        <article class="module">
-          <div class="module-icon" aria-hidden="true">🔐</div>
-          <h3>Secure User Access</h3>
-          <p>
-            Planned role-based access for district administrators,
-            school administrators, school personnel, and approved partners.
-          </p>
-        </article>
-      </div>
-    </section>
-
-    <section class="access">
-      <h2>Access and Account Security</h2>
-      <p>
-        Accounts will be created or approved by authorized administrators.
-        Access to school records and system functions will depend on assigned
-        roles and permissions.
-      </p>
-      <p>
-        <strong>Account registration and login are not available in this preview.</strong>
-      </p>
-    </section>
-
-
-    <section id="enexus-public-announcements" class="access" style="margin-top:28px;">
-      <h2>Announcements and Circulars</h2>
-      <p>Current published announcements and advisories.</p>
-      <button id="enexus-public-announcements-refresh" type="button" style="padding:9px 14px; cursor:pointer;">Refresh Announcements</button>
-      <p id="enexus-public-announcements-message" role="status" aria-live="polite"></p>
-      <div id="enexus-public-announcements-list"></div>
-    </section>
-
-    <section class="contact">
-      <h2>For Authorized Users and Partner Agencies</h2>
-      <p>
-        Please follow your school or district's official instructions for
-        access. Do not submit confidential documents or personal information
-        through this preview page.
-      </p>
-    </section>
-  </main>
-
-  <footer>
-    Project e-NEXUS | Aliaga District, Nueva Ecija
-    <br>
-    School services and stakeholder transactions system
-  </footer>
-  
-<!-- e-NEXUS Login Section -->
-<section id="enexus-login" style="max-width: 440px; margin: 40px auto; padding: 24px; border: 1px solid #d1d5db; border-radius: 12px; font-family: Arial, sans-serif; background: #fff;">
-  <h2 style="text-align: center;">Project e-NEXUS Login</h2>
-  <p style="text-align: center;">Sign in using your approved e-NEXUS account.</p>
-
-  <form id="enexus-login-form">
-    <label for="enexus-email">Email address</label>
-    <input id="enexus-email" name="email" type="email" autocomplete="username" required
-      style="display: block; box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0 16px;">
-
-    <label for="enexus-password">Password</label>
-    <input id="enexus-password" name="password" type="password" autocomplete="current-password" required
-      style="display: block; box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0 16px;">
-
-    <button type="submit" style="width: 100%; padding: 12px; cursor: pointer;">Sign In</button>
-    <p id="enexus-login-message" role="status" aria-live="polite"></p>
-  </form>
-
-  <button id="enexus-show-register" type="button"
-    style="width: 100%; padding: 12px; margin-top: 8px; cursor: pointer;">
-    Request an e-NEXUS Account
-  </button>
-</section>
-<!-- End e-NEXUS Login Section -->
-
-<!-- e-NEXUS Registration Section: a sibling of the login section, not nested inside it -->
-<section id="enexus-register" style="display: none; max-width: 500px; margin: 24px auto; padding: 24px; border: 1px solid #d1d5db; border-radius: 12px; font-family: Arial, sans-serif; background: #fff;">
-  <h2>Request e-NEXUS Access</h2>
-  <p>Create an account and submit an access request. Email confirmation and district administrator approval are required before access is granted.</p>
-
-  <form id="enexus-register-form">
-    <label for="enexus-register-name">Full Name</label>
-    <input id="enexus-register-name" type="text" required autocomplete="name"
-      style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-
-    <label for="enexus-register-email">Email Address</label>
-    <input id="enexus-register-email" type="email" required autocomplete="email"
-      style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-
-    <label for="enexus-register-password">Create Password</label>
-    <input id="enexus-register-password" type="password" minlength="12" required autocomplete="new-password"
-      style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 4px;">
-    <small>Use at least 12 characters.</small>
-
-    <label for="enexus-register-role" style="display:block; margin-top:14px;">Account Type</label>
-    <select id="enexus-register-role" required
-      style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-      <option value="school_personnel">School Personnel</option>
-      <option value="partner">Partner Agency</option>
-    </select>
-
-    <label for="enexus-register-organization">School or Organization</label>
-    <input id="enexus-register-organization" type="text" required
-      style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-
-    <label for="enexus-register-justification">Reason for Request</label>
-    <textarea id="enexus-register-justification" rows="3" required
-      style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;"></textarea>
-
-    <button id="enexus-register-submit" type="submit" style="width:100%; padding:12px; cursor:pointer;">
-      Register and Request Access
-    </button>
-    <p id="enexus-register-message" role="status" aria-live="polite"></p>
-  </form>
-
-  <button id="enexus-back-to-login" type="button" style="width:100%; padding:12px; cursor:pointer;">
-    Back to Login
-  </button>
-</section>
-
-<!-- e-NEXUS Dashboard -->
-<section id="enexus-dashboard"
-         style="display: none; max-width: 900px; margin: 30px auto; padding: 24px; font-family: Arial, sans-serif;">
-
-  <h2>Welcome to Project e-NEXUS</h2>
-  <p id="enexus-user-info"></p>
-
-  <h3>Available Services</h3>
-  <p id="enexus-role-message"></p>
-
-  <!-- District Administrator: account request review -->
-  <section id="enexus-admin-requests" style="display:none; margin:24px 0; padding:18px; border:1px solid #cbd5e1; border-radius:10px;">
-    <h3>Account Access Requests</h3>
-    <p>Review requests before granting access. Approved applicants must have a confirmed email address.</p>
-    <button id="enexus-refresh-requests" type="button" style="padding:9px 14px; cursor:pointer;">Refresh Requests</button>
-    <p id="enexus-admin-requests-message" role="status" aria-live="polite"></p>
-    <div id="enexus-admin-requests-list"></div>
-  </section>
-
-
-  <!-- District Administrator: announcement management -->
-  <section id="enexus-admin-announcements" style="display:none; margin:24px 0; padding:18px; border:1px solid #cbd5e1; border-radius:10px;">
-    <h3>Announcements and Circulars — Management</h3>
-    <p>Create announcements, save drafts, publish them, edit them, or archive them. Only approved District Administrators can manage announcements.</p>
-    <form id="enexus-announcement-form">
-      <input id="enexus-announcement-id" type="hidden">
-      <label for="enexus-announcement-title">Announcement title</label>
-      <input id="enexus-announcement-title" type="text" required maxlength="200"
-        style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-      <label for="enexus-announcement-category">Category</label>
-      <select id="enexus-announcement-category" required
-        style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-        <option>Announcement</option>
-        <option>Memorandum</option>
-        <option>Advisory</option>
-        <option>Circular</option>
-      </select>
-      <label for="enexus-announcement-content">Message / content</label>
-      <textarea id="enexus-announcement-content" rows="6" required
-        style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;"></textarea>
-      <label for="enexus-announcement-expires">Optional expiration date and time</label>
-      <input id="enexus-announcement-expires" type="datetime-local"
-        style="display:block; box-sizing:border-box; width:100%; padding:10px; margin:6px 0 14px;">
-      <button id="enexus-announcement-save-draft" type="button" style="padding:10px 14px; margin:4px; cursor:pointer;">Save Draft</button>
-      <button id="enexus-announcement-publish" type="button" style="padding:10px 14px; margin:4px; cursor:pointer;">Publish</button>
-      <button id="enexus-announcement-cancel-edit" type="button" style="padding:10px 14px; margin:4px; cursor:pointer;">Clear Form</button>
-    </form>
-    <p id="enexus-admin-announcements-message" role="status" aria-live="polite"></p>
-    <h4>All Announcements</h4>
-    <button id="enexus-admin-announcements-refresh" type="button" style="padding:9px 14px; cursor:pointer;">Refresh List</button>
-    <div id="enexus-admin-announcements-list"></div>
-  </section>
-
-  <button id="enexus-logout" type="button"
-          style="padding: 10px 18px; cursor: pointer;">
-    Log Out
-  </button>
-
-</section>
-<!-- End e-NEXUS Dashboard -->
-
-
-<!-- e-NEXUS Supabase connection and login handler -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brandmark">eN</div><div><h1>Project e-NEXUS<small>Unified School Services</small></h1></div></div>
+  <div class="navlabel">WORKSPACE</div>
+  <div class="navrow" style="display:flex;flex-direction:column;gap:4px">
+    <button class="navbtn active" data-page="dashboard"><span>▦</span> Dashboard</button>
+    <button class="navbtn" data-page="projects"><span>◫</span> Projects &amp; Programs</button>
+    <button class="navbtn" data-page="monitoring"><span>◷</span> Monitoring & Evaluation</button>
+    <button class="navbtn" data-page="reports"><span>▤</span> Reports</button>
+    <button class="navbtn" data-page="documents"><span>▣</span> Document Tracing</button>
+    <button class="navbtn" data-page="records"><span>▧</span> Records & Retrieval</button>
+    <button class="navbtn" data-page="activities"><span>▦</span> Activities & Calendar</button>
+    <button class="navbtn" data-page="community"><span>☷</span> Partner Chat</button>
+    <button class="navbtn" data-page="users"><span>♙</span> Users & Access</button>
+  </div>
+  <div class="navlabel">ADMINISTRATION</div>
+  <button class="navbtn" data-page="settings"><span>⚙</span> Settings & Data</button>
+  <div class="sidebarfoot">Prototype for the approved Project e-NEXUS proposal.<br>Use sample data for demonstration only.</div>
+</aside>
+<main class="main">
+  <header class="topbar"><div><div class="eyebrow">Electronic Network for Excellence</div><h2 id="pageTitle">Dashboard</h2></div><div class="topright"><span id="userLabel" class="rolelabel">Project workspace</span><div class="avatar" id="userAvatar">eN</div><button class="secondary" id="logoutBtn" style="padding:8px 10px;font-size:11px" onclick="logout()">Sign out</button></div></header>
+  <div class="content" id="content"></div>
+  <div class="footer">Project e-NEXUS • Projects & Programs • Monitoring & Evaluation • Document Tracing & Management</div>
+</main>
+</div>
+<div class="modalback" id="modalback"><div class="modal"><button class="closex" onclick="closeModal()">✕</button><div id="modalcontent"></div></div></div>
+<div class="toast" id="toast"></div>
 <script>
-  const SUPABASE_URL = "https://khbtkayceidepkedosdi.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_gpD81oogOfrKt36hAalJFg_4FOiAWGD";
-
-  const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
-
-  const loginForm = document.getElementById("enexus-login-form");
-  const emailInput = document.getElementById("enexus-email");
-  const passwordInput = document.getElementById("enexus-password");
-  const message = document.getElementById("enexus-login-message");
-
-
-const loginSection = document.getElementById("enexus-login");
-const dashboard = document.getElementById("enexus-dashboard");
-const userInfo = document.getElementById("enexus-user-info");
-const roleMessage = document.getElementById("enexus-role-message");
-const logoutButton = document.getElementById("enexus-logout");
-const adminRequestsSection = document.getElementById("enexus-admin-requests");
-const refreshRequestsButton = document.getElementById("enexus-refresh-requests");
-const adminRequestsMessage = document.getElementById("enexus-admin-requests-message");
-
-const adminRequestsList = document.getElementById("enexus-admin-requests-list");
-const adminAnnouncementsSection = document.getElementById("enexus-admin-announcements");
-const announcementForm = document.getElementById("enexus-announcement-form");
-const announcementIdInput = document.getElementById("enexus-announcement-id");
-const announcementTitleInput = document.getElementById("enexus-announcement-title");
-const announcementCategoryInput = document.getElementById("enexus-announcement-category");
-const announcementContentInput = document.getElementById("enexus-announcement-content");
-const announcementExpiresInput = document.getElementById("enexus-announcement-expires");
-const announcementMessage = document.getElementById("enexus-admin-announcements-message");
-const adminAnnouncementsList = document.getElementById("enexus-admin-announcements-list");
-const publicAnnouncementsMessage = document.getElementById("enexus-public-announcements-message");
-const publicAnnouncementsList = document.getElementById("enexus-public-announcements-list");
-const publicAnnouncementsRefresh = document.getElementById("enexus-public-announcements-refresh");
-const adminAnnouncementsRefresh = document.getElementById("enexus-admin-announcements-refresh");
-const saveDraftButton = document.getElementById("enexus-announcement-save-draft");
-const publishAnnouncementButton = document.getElementById("enexus-announcement-publish");
-const clearAnnouncementButton = document.getElementById("enexus-announcement-cancel-edit");
-let currentAdminUser = null;
-
-  
-const registerSection = document.getElementById("enexus-register");
-const showRegisterButton = document.getElementById("enexus-show-register");
-const backToLoginButton = document.getElementById("enexus-back-to-login");
-const registerForm = document.getElementById("enexus-register-form");
-const registerMessage = document.getElementById("enexus-register-message");
-
-if (showRegisterButton && registerSection && loginSection) {
-  showRegisterButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    registerSection.style.display = "block";
-    loginSection.style.display = "none";
-    registerSection.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
-
-if (backToLoginButton && registerSection && loginSection) {
-  backToLoginButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    registerSection.style.display = "none";
-    loginSection.style.display = "block";
-    loginSection.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-}
-
-async function submitAccessRequest(user, values) {
-  // Do not let an existing profiled account submit a new registration request.
-  const { data: existingProfile, error: profileError } = await supabaseClient
-    .from("e_nexus_profiles")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (profileError) {
-    throw new Error("Could not verify whether this account already has a profile. Please try again.");
-  }
-  if (existingProfile) {
-    throw new Error("This account already has an e-NEXUS profile. Please use the login page or contact the administrator.");
-  }
-
-  const { error: requestError } = await supabaseClient.rpc(
-    "submit_e_nexus_account_request",
-    {
-      p_full_name: values.fullName,
-      p_email: values.email,
-      p_requested_role: values.role,
-      p_school_id: null,
-      p_organization_name: values.organization,
-      p_justification: values.justification
-    }
-  );
-
-  if (requestError) {
-    throw new Error(requestError.message || "The access request could not be submitted.");
-  }
-}
-
-if (registerForm && registerMessage) {
-  registerForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
-
-    const submitButton = document.getElementById("enexus-register-submit");
-    if (submitButton) submitButton.disabled = true;
-    registerMessage.textContent = "Processing your account and access request...";
-
-    const values = {
-      fullName: document.getElementById("enexus-register-name").value.trim(),
-      email: document.getElementById("enexus-register-email").value.trim().toLowerCase(),
-      password: document.getElementById("enexus-register-password").value,
-      role: document.getElementById("enexus-register-role").value,
-      organization: document.getElementById("enexus-register-organization").value.trim(),
-      justification: document.getElementById("enexus-register-justification").value.trim()
-    };
-
-    let signedInUser = null;
-    let shouldSignOut = false;
-
-    try {
-      // If the applicant already confirmed their email, sign in and submit the pending request.
-      const signInResult = await supabaseClient.auth.signInWithPassword({
-        email: values.email,
-        password: values.password
-      });
-
-      if (!signInResult.error && signInResult.data.user) {
-        signedInUser = signInResult.data.user;
-        shouldSignOut = true;
-        await submitAccessRequest(signedInUser, values);
-        registerForm.reset();
-        registerMessage.textContent = "Your access request has been submitted and is pending district administrator review. You may now return to the login page.";
-        return;
-      }
-
-      if (signInResult.error && signInResult.error.code === "email_not_confirmed") {
-        throw new Error("Please confirm your email first. Open the confirmation link sent by Supabase, then return here and submit this form again using the same email and password.");
-      }
-
-      // For a new email, create an Auth account. With email confirmation enabled,
-      // Supabase may not create a session until the applicant confirms their email.
-      const signUpResult = await supabaseClient.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: { full_name: values.fullName },
-          emailRedirectTo: window.location.origin
-        }
-      });
-
-      if (signUpResult.error) {
-        const code = signUpResult.error.code || "";
-        if (code === "email_not_confirmed") {
-          throw new Error("Please confirm your email first. Then return here and submit the form again using the same email and password.");
-        }
-        throw new Error(signUpResult.error.message || "Account registration failed.");
-      }
-
-      if (signUpResult.data.user && signUpResult.data.session) {
-        signedInUser = signUpResult.data.user;
-        shouldSignOut = true;
-        await submitAccessRequest(signedInUser, values);
-        registerForm.reset();
-        registerMessage.textContent = "Your access request has been submitted and is pending district administrator review.";
-      } else {
-        registerMessage.textContent = "Account created. Check your email and click the confirmation link. After confirming, return to this page and submit this form again with the same email and password to send your access request. Your account does not have e-NEXUS access until the administrator approves it.";
-      }
-    } catch (error) {
-      registerMessage.textContent = error.message || "Registration could not be completed. Please try again.";
-    } finally {
-      if (shouldSignOut) {
-        const { error: signOutError } = await supabaseClient.auth.signOut();
-        if (signOutError) {
-          registerMessage.textContent += " Please sign out before using another account.";
-        }
-      }
-      if (submitButton) submitButton.disabled = false;
-    }
-  });
-}
-
-const roleDescriptions = {
-  district_admin: "District Administrator: District-level services.",
-  school_admin: "School Administrator: Authorized school-level services.",
-  school_personnel: "School Personnel: Services permitted for your account.",
-  partner: "Partner Agency: Services permitted for approved partners."
+const $=s=>document.querySelector(s);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,8).toUpperCase();
+const seed={
+ projects:[
+ {id:'PRJ-001',name:'School-Based Wellness Program',owner:'School Head',start:today(),end:'2026-12-15',status:'In Progress',progress:60,budget:'',objective:'Support staff wellness through coordinated school activities.',notes:'Sample project — replace with actual project data.'},
+ {id:'PRJ-002',name:'Digital Records Improvement',owner:'Records Officer',start:today(),end:'2026-11-30',status:'Planned',progress:15,budget:'',objective:'Improve document organization, routing and retrieval.',notes:'Sample project — replace with actual project data.'}
+ ],
+ indicators:[
+ {id:'IND-001',project:'PRJ-001',name:'Activities completed',target:10,actual:6,unit:'activities',date:today(),notes:'Sample indicator'},
+ {id:'IND-002',project:'PRJ-001',name:'Staff participation',target:80,actual:55,unit:'percent',date:today(),notes:'Sample indicator'}
+ ],
+ docs:[
+ {id:'DOC-2026-001',title:'Project Implementation Plan',type:'Project Plan',from:'Project Coordinator',to:'School Head',date:today(),due:'',status:'For Review',priority:'Normal',location:'Project Office',remarks:'Sample document record.'},
+ {id:'DOC-2026-002',title:'Monthly Accomplishment Report',type:'Accomplishment Report',from:'Program Lead',to:'Division Office',date:today(),due:'',status:'Received',priority:'High',location:'Records Section',remarks:'Sample document record.'}
+ ],
+ activities:[
+ {id:'ACT-001',title:'School-Based Wellness and Advocacy Program',date:'2026-11-05',time:'9:00 AM',venue:'School Conference Hall',organizer:'School Wellness Team',audience:'School personnel and partners',status:'Upcoming',description:'Sample activity. Confirm details with the school coordinator before sharing.'},
+ {id:'ACT-002',title:'Partner Coordination Meeting',date:'2026-11-12',time:'2:00 PM',venue:'School Library / Online',organizer:'School Administration',audience:'Partner agencies and school leaders',status:'Upcoming',description:'Sample meeting to coordinate planned programs and partner support.'},
+ {id:'ACT-003',title:'Community Learning Support Activity',date:'2026-11-20',time:'8:30 AM',venue:'School Grounds',organizer:'Community Partnership Team',audience:'Learners, families and partner organizations',status:'Planning',description:'Sample program entry. Replace with approved activity details.'}
+ ],
+ users:[
+ {id:'USR-001',name:'System Administrator',email:'admin@enexus.local',role:'Administrator',agency:'School Administration',active:true},
+ {id:'USR-002',name:'School Personnel Demo',email:'staff@enexus.local',role:'School Personnel',agency:'School',active:true},
+ {id:'USR-003',name:'Partner Agency Demo',email:'partner@enexus.local',role:'Partner Agency',agency:'Partner Organization',active:true}
+ ],
+ chats:{
+  'School Coordination':[{sender:'School Personnel Demo',text:'Welcome to the Project e-NEXUS coordination space. Please use this sample chat to test partner communication.',time:'Sample message'}],
+  'Partner Agencies':[{sender:'Partner Agency Demo',text:'We can coordinate upcoming activities and program support here.',time:'Sample message'}],
+  'Project Team':[{sender:'System Administrator',text:'Please share project updates and action items in the appropriate channel.',time:'Sample message'}]
+ },
+ activity:[]
 };
-
-async function verifyProfile(user) {
-  const { data: profile, error } = await supabaseClient
-    .from("e_nexus_profiles")
-    .select("full_name, role, account_status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (error) throw new Error("Unable to verify your account permissions.");
-
-  const allowedRoles = [
-    "district_admin",
-    "school_admin",
-    "school_personnel",
-    "partner"
-  ];
-
-  if (
-    !profile ||
-    profile.account_status !== "approved" ||
-    !allowedRoles.includes(profile.role)
-  ) {
-    throw new Error("Your account is not approved for access.");
-  }
-
-  return profile;
+let db;
+try{db=JSON.parse(localStorage.getItem('enexusData'))||structuredClone(seed)}catch(e){db=JSON.parse(JSON.stringify(seed))}
+db.activities ||= JSON.parse(JSON.stringify(seed.activities));
+db.users ||= JSON.parse(JSON.stringify(seed.users));
+db.chats ||= JSON.parse(JSON.stringify(seed.chats));
+let currentUser=null, currentChat='School Coordination';
+let page='login', query='', filter='All';
+function save(){localStorage.setItem('enexusData',JSON.stringify(db))}
+function toast(s){let t=$('#toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
+function log(msg){db.activity.unshift({date:new Date().toLocaleString(),msg});db.activity=db.activity.slice(0,30);save()}
+function statusPill(s){let cls=/complete|approved|released|received|closed/i.test(s)?'green':/overdue|rejected|returned/i.test(s)?'red':/review|progress|pending|routed/i.test(s)?'amber':'';return `<span class="pill ${cls}">${esc(s)}</span>`}
+function projectName(id){return db.projects.find(p=>p.id===id)?.name||'Unassigned'}
+function setPage(p){if(!currentUser){showLogin();return}page=p;query='';document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render()}
+document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
+function render(){if(!currentUser){showLogin();return}$('#userLabel').textContent=currentUser.name+' • '+currentUser.role;$('#userAvatar').textContent=(currentUser.name||'eN').split(/\s+/).map(s=>s[0]).slice(0,2).join('').toUpperCase();document.querySelectorAll('.navbtn[data-page="users"]').forEach(b=>b.classList.toggle('hidden',currentUser.role!=='Administrator'));let titles={dashboard:'Dashboard',projects:'Projects & Programs',monitoring:'Monitoring & Evaluation',reports:'Reports',documents:'Document Tracing',records:'Records & Retrieval',settings:'Settings & Data',activities:'Activities & Calendar',community:'Partner Chat',users:'Users & Access'};if(currentUser.role==='Partner Agency'&&!['dashboard','activities','community'].includes(page)){page='activities'}$('#pageTitle').textContent=titles[page]||'Dashboard';let f={dashboard:dashboardPage,projects:projectsPage,monitoring:monitorPage,reports:reportsPage,documents:documentsPage,records:recordsPage,settings:settingsPage,activities:activitiesPage,community:communityPage,users:usersPage};$('#content').innerHTML=f[page]();wire()}
+function dashboardPage(){
+ let active=db.projects.filter(p=>p.status==='In Progress').length, pending=db.docs.filter(d=>!/complete|approved|released|closed/i.test(d.status)).length, avg=db.projects.length?Math.round(db.projects.reduce((a,p)=>a+Number(p.progress||0),0)/db.projects.length):0;
+ return `<section class="welcome"><div><div class="tag">APPROVED PROJECT • DIGITAL WORKSPACE</div><h3>Welcome to Project e-NEXUS</h3><p>A unified workspace for planning and monitoring programs, evaluating performance, routing documents, and organizing official records.</p></div><div class="welcomeicon">⌘</div></section>
+ <div class="stats"><div class="stat"><div class="label">Registered Programs / Projects</div><div class="value">${db.projects.length}</div><div class="hint">Across the project workspace</div></div><div class="stat"><div class="label">Projects In Progress</div><div class="value">${active}</div><div class="hint">Current implementation status</div></div><div class="stat"><div class="label">Documents in Workflow</div><div class="value">${pending}</div><div class="hint">Not yet closed or completed</div></div><div class="stat"><div class="label">Average Project Progress</div><div class="value">${avg}%</div><div class="hint">Based on entered progress values</div></div></div>
+ <div class="twocol"><div class="panel"><div class="panelhead"><div><h3>Project implementation overview</h3><p>Progress values are manually updated by authorized users.</p></div><button class="secondary" data-go="projects">View all</button></div>${db.projects.length?db.projects.slice(0,5).map(p=>`<div style="margin:18px 0"><div style="display:flex;justify-content:space-between;gap:12px"><strong style="font-size:12px">${esc(p.name)}</strong>${statusPill(p.status)}</div><div class="bar"><span style="width:${Math.max(0,Math.min(100,Number(p.progress)||0))}%"></span></div><div style="font-size:11px;color:var(--muted)">${Number(p.progress)||0}% complete • Lead: ${esc(p.owner||'Not assigned')}</div></div>`).join(''):'<div class="empty">No projects yet. Add a project to begin.</div>'}</div>
+ <div class="panel"><div class="panelhead"><div><h3>Quick actions</h3><p>Start a common workflow.</p></div></div><div class="quickgrid"><div class="quick"><span>◫</span><strong>Register a project</strong><p>Create a project record, timeline and lead.</p><button data-action="add-project">Add project</button></div><div class="quick"><span>▣</span><strong>Track a document</strong><p>Register incoming or outgoing documents.</p><button data-action="add-doc">Add document</button></div><div class="quick"><span>◷</span><strong>Record performance</strong><p>Update indicator targets and actual results.</p><button data-action="add-indicator">Add indicator</button></div><div class="quick"><span>▤</span><strong>Generate report</strong><p>Prepare a live summary from saved records.</p><button data-go="reports" class="secondary">Open reports</button></div></div></div></div>
+ <div class="panel" style="margin-top:18px"><div class="panelhead"><div><h3>Upcoming school activities</h3><p>Shared events and program announcements.</p></div><button class="secondary" data-go="activities">View calendar</button></div>${db.activities.filter(a=>a.date>=today()&&a.status!=='Cancelled').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,3).map(a=>`<div class="eventcard"><div class="datebox"><b>${new Date(a.date+'T12:00:00').getDate()}</b><small>${new Date(a.date+'T12:00:00').toLocaleString('en',{month:'short'})}</small></div><div class="eventbody"><h4>${esc(a.title)}</h4><p>${esc(a.time||'Time TBA')} • ${esc(a.venue||'Venue TBA')}</p>${statusPill(a.status)}</div></div>`).join('')||'<div class="empty">No upcoming activities have been scheduled.</div>'}</div>
+ <div class="panel" style="margin-top:18px"><div class="panelhead"><div><h3>Recent activity</h3><p>Latest actions recorded in this browser.</p></div></div>${db.activity.length?`<div class="timeline">${db.activity.slice(0,5).map(a=>`<div class="timelineitem"><span class="dot"></span><div><strong>${esc(a.msg)}</strong><p>${esc(a.date)}</p></div></div>`).join('')}</div>`:'<div class="empty">No activity yet. Your actions will appear here.</div>'}</div>`
 }
+function projectsPage(){return `<h3 class="sectiontitle">Projects &amp; Programs</h3><p class="sectiondesc">Register school projects and programs, define objectives and timelines, assign leads, and monitor implementation progress. Use the New project button to add a program or project and Export CSV to download the list.</p><div class="panel" style="margin-bottom:14px"><div class="panelhead"><div><h3>Project and program workspace</h3><p>Register new initiatives, track their status and progress, and edit or remove existing entries.</p></div><span class="pill">${db.projects.length} registered</span></div><div class="stats"><div class="stat"><div class="label">Planned</div><div class="value">${db.projects.filter(p=>p.status==='Planned').length}</div></div><div class="stat"><div class="label">In progress</div><div class="value">${db.projects.filter(p=>p.status==='In Progress').length}</div></div><div class="stat"><div class="label">Completed</div><div class="value">${db.projects.filter(p=>p.status==='Completed').length}</div></div></div></div><div class="toolbar"><input id="search" placeholder="Search projects or programs…" value="${esc(query)}"><select id="statusFilter"><option>All</option>${['Planned','In Progress','On Hold','Completed','Cancelled'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select><button data-action="add-project">+ New project / program</button><button class="secondary" data-action="export-projects">Export CSV</button></div><div class="tablewrap"><table><thead><tr><th>Project</th><th>Lead / Owner</th><th>Timeline</th><th>Status</th><th>Progress</th><th>Actions</th></tr></thead><tbody>${db.projects.filter(p=>(filter==='All'||p.status===filter)&&JSON.stringify(p).toLowerCase().includes(query.toLowerCase())).map(p=>`<tr><td><strong>${esc(p.name)}</strong><span class="sub">${esc(p.id)} • ${esc(p.objective||'No objective entered')}</span></td><td>${esc(p.owner||'—')}</td><td>${esc(p.start||'—')}<span class="sub">to ${esc(p.end||'—')}</span></td><td>${statusPill(p.status)}</td><td><strong>${Number(p.progress)||0}%</strong><div class="bar"><span style="width:${Math.max(0,Math.min(100,Number(p.progress)||0))}%"></span></div></td><td><div class="actions"><button class="secondary" data-edit-project="${p.id}">Edit</button><button class="danger" data-delete-project="${p.id}">Delete</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No matching projects.</td></tr>'}</tbody></table></div>`}
+function monitorPage(){return `<h3 class="sectiontitle">Monitoring & Evaluation</h3><p class="sectiondesc">Track performance indicators against targets and actual results. These records can inform periodic evaluation and accomplishment reporting.</p><div class="toolbar"><input id="search" placeholder="Search indicators…" value="${esc(query)}"><button data-action="add-indicator">+ Add indicator</button><button class="secondary" data-action="export-indicators">Export CSV</button></div><div class="tablewrap"><table><thead><tr><th>Indicator</th><th>Linked project</th><th>Target</th><th>Actual</th><th>Achievement</th><th>Last updated</th><th>Actions</th></tr></thead><tbody>${db.indicators.filter(i=>JSON.stringify(i).toLowerCase().includes(query.toLowerCase())).map(i=>{let pct=Number(i.target)>0?Math.round(Number(i.actual)/Number(i.target)*100):0;return `<tr><td><strong>${esc(i.name)}</strong><span class="sub">${esc(i.id)} • ${esc(i.unit||'unit not set')}</span></td><td>${esc(projectName(i.project))}</td><td>${esc(i.target)}</td><td>${esc(i.actual)}</td><td><strong>${pct}%</strong><div class="bar"><span style="width:${Math.min(100,Math.max(0,pct))}%"></span></div></td><td>${esc(i.date||'—')}</td><td><div class="actions"><button class="secondary" data-edit-indicator="${i.id}">Edit</button><button class="danger" data-delete-indicator="${i.id}">Delete</button></div></td></tr>`}).join('')||'<tr><td colspan="7" class="empty">No indicators recorded.</td></tr>'}</tbody></table></div><div class="notice" style="margin-top:16px">Evaluation results depend on the quality and accuracy of the data entered. Agree on indicator definitions, evidence sources, reporting periods, and responsible personnel before official use.</div>`}
+function documentsPage(){return `<h3 class="sectiontitle">Document Tracing & Management</h3><p class="sectiondesc">Register documents, route them to the next responsible office or person, and maintain a traceable status history.</p><div class="toolbar"><input id="search" placeholder="Search title, ID, person or remarks…" value="${esc(query)}"><select id="statusFilter"><option>All</option>${['Received','For Review','Routed','Pending Action','Approved','Released','Returned','Completed','Closed'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select><button data-action="add-doc">+ Register document</button><button class="secondary" data-action="export-docs">Export CSV</button></div><div class="tablewrap"><table><thead><tr><th>Document</th><th>From → To</th><th>Received / Due</th><th>Status</th><th>Current location</th><th>Actions</th></tr></thead><tbody>${db.docs.filter(d=>(filter==='All'||d.status===filter)&&JSON.stringify(d).toLowerCase().includes(query.toLowerCase())).map(d=>`<tr><td><strong>${esc(d.title)}</strong><span class="sub">${esc(d.id)} • ${esc(d.type)}</span><span class="sub">Priority: ${esc(d.priority||'Normal')}</span></td><td>${esc(d.from||'—')}<span class="sub">→ ${esc(d.to||'—')}</span></td><td>${esc(d.date||'—')}<span class="sub">Due: ${esc(d.due||'Not set')}</span></td><td>${statusPill(d.status)}</td><td>${esc(d.location||'—')}<span class="sub">${esc(d.remarks||'')}</span></td><td><div class="actions"><button data-route-doc="${d.id}">Update / Route</button><button class="secondary" data-edit-doc="${d.id}">Edit</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No matching documents.</td></tr>'}</tbody></table></div>`}
+function recordsPage(){return `<h3 class="sectiontitle">Records & Retrieval</h3><p class="sectiondesc">Search and retrieve document metadata from the registered records. Add file reference details and follow your office's official records-retention and access policies.</p><div class="toolbar"><input id="search" placeholder="Search all registered records…" value="${esc(query)}"><button class="secondary" data-action="export-docs">Export records CSV</button></div><div class="stats"><div class="stat"><div class="label">Total records</div><div class="value">${db.docs.length}</div></div><div class="stat"><div class="label">High priority</div><div class="value">${db.docs.filter(d=>d.priority==='High').length}</div></div><div class="stat"><div class="label">Approved / Released</div><div class="value">${db.docs.filter(d=>/approved|released|completed|closed/i.test(d.status)).length}</div></div><div class="stat"><div class="label">Returned</div><div class="value">${db.docs.filter(d=>d.status==='Returned').length}</div></div></div><div class="tablewrap"><table><thead><tr><th>Record ID</th><th>Document title</th><th>Type</th><th>Status</th><th>Location</th><th>Record details</th></tr></thead><tbody>${db.docs.filter(d=>JSON.stringify(d).toLowerCase().includes(query.toLowerCase())).map(d=>`<tr><td><strong>${esc(d.id)}</strong></td><td>${esc(d.title)}</td><td>${esc(d.type)}</td><td>${statusPill(d.status)}</td><td>${esc(d.location||'—')}</td><td><button class="secondary" data-edit-doc="${d.id}">View / edit</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No records match your search.</td></tr>'}</tbody></table></div>`}
+function reportsPage(){let completed=db.projects.filter(p=>p.status==='Completed').length, avg=db.projects.length?Math.round(db.projects.reduce((s,p)=>s+Number(p.progress||0),0)/db.projects.length):0, approved=db.docs.filter(d=>/approved|released|completed|closed/i.test(d.status)).length;return `<h3 class="sectiontitle">Reports & Accomplishments</h3><p class="sectiondesc">Generate a current summary of project implementation, performance indicators, and document transactions. Review and validate the information before official submission.</p><div class="toolbar"><button data-action="generate-report">Generate current summary</button><button class="secondary" data-action="download-report">Download report (.txt)</button><button class="secondary" data-action="export-all">Export all data (JSON)</button></div><div class="stats"><div class="stat"><div class="label">Projects</div><div class="value">${db.projects.length}</div><div class="hint">${completed} marked completed</div></div><div class="stat"><div class="label">Average progress</div><div class="value">${avg}%</div><div class="hint">Entered project progress</div></div><div class="stat"><div class="label">Performance indicators</div><div class="value">${db.indicators.length}</div><div class="hint">Targets and actuals recorded</div></div><div class="stat"><div class="label">Documents completed</div><div class="value">${approved}</div><div class="hint">Approved, released, closed or completed</div></div></div><div class="panel"><div class="panelhead"><div><h3>Generated report preview</h3><p>Summary is generated from the current records in this browser.</p></div></div><div id="reportPreview" class="reportbox">Select “Generate current summary” to build the latest report.</div></div>`}
+function settingsPage(){return `<h3 class="sectiontitle">Settings & Data Management</h3><p class="sectiondesc">Manage the local prototype data. This version stores data in this browser only.</p><div class="notice"><strong>Important deployment note:</strong> This prototype has no shared server, user authentication, role permissions, automated email notifications, or central backup. Do not enter confidential or sensitive records. Production deployment requires an approved hosting environment, database, access controls, audit logging, backup, and privacy/security review.</div><div class="panel"><div class="panelhead"><div><h3>Data backup and restore</h3><p>Export a JSON backup before resetting or moving browser data.</p></div></div><div class="toolbar"><button data-action="export-all">Download backup (JSON)</button><label class="secondary" style="display:inline-flex;align-items:center;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:650">Import backup <input type="file" id="importFile" accept=".json,application/json" style="display:none"></label><button class="danger" data-action="reset-data">Reset to sample data</button></div></div><div class="panel" style="margin-top:16px"><h3 style="margin-top:0">Prototype modules</h3><div class="timeline"><div class="timelineitem"><span class="dot"></span><div><strong>System 1 — Program Management & Evaluation</strong><p>Project registration, objectives, timelines, status/progress, performance indicators, evaluation summaries and accomplishment reports.</p></div></div><div class="timelineitem"><span class="dot"></span><div><strong>System 2 — Document Tracing & Management</strong><p>Document registration, routing/status updates, responsible person/office, due dates, location, searchable records and CSV exports.</p></div></div></div></div>`}
 
-function showLogin() {
-  dashboard.style.display = "none";
-  if (registerSection) registerSection.style.display = "none";
-  if (adminRequestsSection) adminRequestsSection.style.display = "none";
-  if (adminRequestsList) adminRequestsList.replaceChildren();
-  if (adminAnnouncementsSection) adminAnnouncementsSection.style.display = "none";
-  currentAdminUser = null;
-  loginSection.style.display = "block";
-  userInfo.textContent = "";
-  roleMessage.textContent = "";
+function showLogin(){
+ document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.remove('active'));
+ $('#pageTitle').textContent='Sign in';
+ $('#content').innerHTML=`<section class="welcome"><div><div class="tag">SCHOOL • PROGRAMS • PARTNERS</div><h3>One connected school community.</h3><p>Explore school activities, coordinate projects, and communicate with participating partners through Project e-NEXUS.</p></div><div class="welcomeicon">⌘</div></section><div class="panel" style="max-width:680px;margin:0 auto"><h3 style="margin-top:0">Sign in to Project e-NEXUS</h3><p class="sectiondesc">Choose a demo account below to explore role-based portal views. This prototype does not verify passwords or provide real account security.</p><div class="quickgrid"><div class="quick"><strong>Administrator</strong><p>Manage programs, records, activities and demo users.</p><button data-login="admin@enexus.local">Continue as administrator</button></div><div class="quick"><strong>School personnel</strong><p>View activities, projects and partner chat.</p><button data-login="staff@enexus.local">Continue as school personnel</button></div><div class="quick"><strong>Partner agency</strong><p>View shared activities and coordinate with the school.</p><button data-login="partner@enexus.local">Continue as partner</button></div></div><div class="notice" style="margin-top:16px">For demonstration only: these buttons simulate login. Before public launch, implement verified accounts, secure password handling, role-based permissions, privacy controls and a server-backed database.</div></div>`;
+ $('#content').querySelectorAll('[data-login]').forEach(b=>b.onclick=()=>loginAs(b.dataset.login));
 }
+function loginAs(email){currentUser=db.users.find(u=>u.email===email&&u.active)||{name:'Demo User',email,role:'School Personnel',agency:'Demo'};page='dashboard';document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page==='dashboard'));$('#topbarDummy');render();toast('Demo session started as '+currentUser.role)}
+function logout(){currentUser=null;page='login';render();toast('Signed out of the demo session.')}
+function activitiesPage(){let items=[...db.activities].sort((a,b)=>(a.date||'').localeCompare(b.date||''));return `<h3 class="sectiontitle">School Activities & Programs</h3><p class="sectiondesc">A shared calendar for upcoming school activities, project milestones, meetings, and partner-agency programs.</p><div class="toolbar"><input id="search" placeholder="Search activities, venues or organizers…" value="${esc(query)}"><select id="statusFilter"><option>All</option>${['Upcoming','Planning','Completed','Cancelled'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select>${currentUser.role==='Administrator'?'<button data-action="add-activity">+ Add activity</button>':''}<button class="secondary" data-action="export-activities">Export CSV</button></div><div class="panel"><div class="panelhead"><div><h3>Calendar and announcements</h3><p>Confirm dates and details with the activity organizer.</p></div><span class="pill">${items.length} activities</span></div>${items.filter(a=>(filter==='All'||a.status===filter)&&JSON.stringify(a).toLowerCase().includes(query.toLowerCase())).map(a=>{let d=new Date((a.date||today())+'T12:00:00');return `<div class="eventcard"><div class="datebox"><b>${isNaN(d)?'—':d.getDate()}</b><small>${isNaN(d)?'Date':d.toLocaleString('en',{month:'short'})}</small></div><div class="eventbody"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h4>${esc(a.title)}</h4>${statusPill(a.status)}</div><p>${esc(a.description||'No description provided.')}</p><div style="font-size:11px;color:var(--muted)">📅 ${esc(a.date)} • ${esc(a.time||'Time TBA')} &nbsp; · &nbsp; 📍 ${esc(a.venue||'Venue TBA')}<br>Organizer: ${esc(a.organizer||'Not assigned')} • Audience: ${esc(a.audience||'Not specified')}</div>${currentUser.role==='Administrator'?`<div class="actions" style="margin-top:9px"><button class="secondary" data-edit-activity="${a.id}">Edit</button><button class="danger" data-delete-activity="${a.id}">Delete</button></div>`:''}</div></div>`}).join('')||'<div class="empty">No activities match your search.</div>'}</div>`}
+function communityPage(){let names=Object.keys(db.chats);let msgs=db.chats[currentChat]||[];return `<h3 class="sectiontitle">Partner Communication</h3><p class="sectiondesc">Demo conversation channels for coordinating activities, project updates, and inter-agency collaboration. Keep confidential or sensitive information out of this prototype.</p><div class="notice">Messages in this prototype are saved only in this browser. There is no real-time delivery to other users or agencies until a shared backend and authenticated messaging service are deployed.</div><div class="chatlayout"><div class="chatlist"><div style="font-size:10px;letter-spacing:1px;font-weight:800;color:var(--muted);padding:8px">CONVERSATIONS</div>${names.map(n=>`<button class="chatcontact ${n===currentChat?'active':''}" data-chat="${esc(n)}"><span class="contactavatar">${esc(n.slice(0,1))}</span><span class="contactmeta"><b>${esc(n)}</b><small>${(db.chats[n]||[]).length} messages</small></span></button>`).join('')}${currentUser.role==='Administrator'?'<button class="secondary" style="width:100%;margin-top:10px" data-action="add-chat">+ New channel</button>':''}</div><div class="chatwindow"><div class="chathead">${esc(currentChat)} <span class="rolechip" style="float:right">${esc(currentUser.role)}</span></div><div class="chatmessages" id="chatmessages">${msgs.map(m=>`<div class="bubble ${m.sender===currentUser.name?'mine':''}"><strong>${esc(m.sender)}</strong><div>${esc(m.text)}</div><small>${esc(m.time||'')}</small></div>`).join('')||'<div class="empty">No messages yet. Start the conversation.</div>'}</div><form class="chatcompose" id="chatForm"><input name="message" placeholder="Write a message…" required maxlength="1000"><button>Send</button></form></div></div>`}
+function usersPage(){if(currentUser.role!=='Administrator')return `<h3 class="sectiontitle">Users & Access</h3><div class="notice">This section is available to demo administrators only. Contact the system administrator to request access in a production deployment.</div>`;return `<h3 class="sectiontitle">Users & Access</h3><p class="sectiondesc">Prototype user directory and role labels. Real account provisioning and permission enforcement are not yet implemented.</p><div class="toolbar"><button data-action="add-user">+ Add demo user</button></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th></tr></thead><tbody>${db.users.map(u=>`<tr><td><strong>${esc(u.name)}</strong><span class="sub">${esc(u.id)}</span></td><td>${esc(u.email)}</td><td>${esc(u.agency||'—')}</td><td>${esc(u.role)}</td><td>${u.active?'<span class="pill green">Active (demo)</span>':'<span class="pill red">Inactive</span>'}</td></tr>`).join('')}</tbody></table></div><div class="notice" style="margin-top:16px">Recommended production roles: System Administrator, School Administrator, Project Coordinator, School Personnel, Records Officer, and Partner Agency. Each role should have explicit view/edit permissions.</div>`}
+function activityForm(id=null){let a=id?db.activities.find(x=>x.id===id):{};openModal(id?'Edit activity':'Add school activity / program',formWrap('activityForm',[field('Activity / program title *','title',a.title||''),field('Date','date',a.date||today(),'date'),field('Time','time',a.time||''),field('Venue / meeting link reference','venue',a.venue||''),field('Organizer','organizer',a.organizer||currentUser.name),field('Intended audience','audience',a.audience||'School community and partners'),field('Status','status',a.status||'Upcoming','text',['Planning','Upcoming','Completed','Cancelled']),field('Description / announcement','description',a.description||'','textarea',null,true)]));$('#activityForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.title.trim())return toast('Activity title is required.');if(id)Object.assign(a,x);else{x.id='ACT-'+uid();db.activities.push(x)}log((id?'Updated':'Added')+' activity: '+x.title);save();closeModal();render();toast('Activity saved.')}}
+function addChatForm(){openModal('Create conversation channel',formWrap('chatAddForm',[field('Channel name *','name',''),field('Purpose','purpose','Partner coordination'),field('Initial message','message','Welcome to this channel.','textarea',null,true)]));$('#chatAddForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));let n=x.name.trim();if(!n)return toast('Channel name is required.');if(db.chats[n])return toast('A channel with that name already exists.');db.chats[n]=[{sender:currentUser.name,text:x.message||'Channel created.',time:new Date().toLocaleString()}];currentChat=n;save();closeModal();render();toast('Channel created in this browser.')}}
+function addUserForm(){openModal('Add demo user',formWrap('userForm',[field('Full name *','name',''),field('Email *','email',''),field('Organization / agency','agency',''),field('Role','role','School Personnel','text',['Administrator','School Administrator','Project Coordinator','School Personnel','Records Officer','Partner Agency'])]));$('#userForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim()||!x.email.trim())return toast('Name and email are required.');if(db.users.some(u=>u.email.toLowerCase()===x.email.toLowerCase()))return toast('That email is already listed.');db.users.push({id:'USR-'+uid(),...x,active:true});log('Added demo user: '+x.email);save();closeModal();render();toast('Demo user added. No invitation was sent.')}}
 
-function showDashboard(profile) {
-  loginSection.style.display = "none";
-  if (registerSection) registerSection.style.display = "none";
-  dashboard.style.display = "block";
-  userInfo.textContent =
-    "Signed in as " + profile.full_name +
-    " | Role: " + profile.role.replaceAll("_", " ");
-  roleMessage.textContent = roleDescriptions[profile.role];
-  if (adminAnnouncementsSection) {
-    const isDistrictAdmin = profile.role === "district_admin";
-    adminAnnouncementsSection.style.display = isDistrictAdmin ? "block" : "none";
-    if (isDistrictAdmin) loadAdminAnnouncements();
-    else if (adminAnnouncementsList) adminAnnouncementsList.replaceChildren();
-  }
-
-  if (adminRequestsSection) {
-    const isDistrictAdmin = profile.role === "district_admin";
-    adminRequestsSection.style.display = isDistrictAdmin ? "block" : "none";
-    if (isDistrictAdmin) loadAccountRequests();
-    else if (adminRequestsList) adminRequestsList.replaceChildren();
-  }
-}
-
-function formatRequestDate(value) {
-  if (!value) return "Date unavailable";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
-}
-
-async function loadAccountRequests() {
-  if (!adminRequestsList || !adminRequestsMessage) return;
-  adminRequestsMessage.textContent = "Loading pending requests...";
-  adminRequestsList.replaceChildren();
-  if (refreshRequestsButton) refreshRequestsButton.disabled = true;
-
-  try {
-    const { data: requests, error } = await supabaseClient
-      .from("e_nexus_account_requests")
-      .select("id, full_name, email, requested_role, organization_name, justification, request_status, created_at")
-      .eq("request_status", "pending")
-      .order("created_at", { ascending: true });
-
-    if (error) throw error;
-
-    if (!requests || requests.length === 0) {
-      adminRequestsMessage.textContent = "There are no pending access requests.";
-      return;
-    }
-
-    adminRequestsMessage.textContent = requests.length + " pending request(s).";
-    requests.forEach(function (request) {
-      const card = document.createElement("article");
-      card.style.cssText = "margin:14px 0; padding:14px; border:1px solid #d1d5db; border-radius:8px;";
-
-      const heading = document.createElement("h4");
-      heading.textContent = request.full_name || "Name not provided";
-      card.appendChild(heading);
-
-      const details = document.createElement("p");
-      details.textContent = "Email: " + (request.email || "—") +
-        " | Requested role: " + String(request.requested_role || "—").replaceAll("_", " ") +
-        " | Organization: " + (request.organization_name || "—") +
-        " | Submitted: " + formatRequestDate(request.created_at);
-      card.appendChild(details);
-
-      if (request.justification) {
-        const reason = document.createElement("p");
-        reason.textContent = "Reason: " + request.justification;
-        card.appendChild(reason);
-      }
-
-      const approve = document.createElement("button");
-      approve.type = "button";
-      approve.textContent = "Approve Request";
-      approve.style.cssText = "padding:9px 12px; margin:4px 8px 4px 0; cursor:pointer;";
-      approve.addEventListener("click", function () {
-        reviewAccountRequest(request.id, "approved", approve, reject);
-      });
-      card.appendChild(approve);
-
-      const reject = document.createElement("button");
-      reject.type = "button";
-      reject.textContent = "Reject Request";
-      reject.style.cssText = "padding:9px 12px; margin:4px; cursor:pointer;";
-      reject.addEventListener("click", function () {
-        reviewAccountRequest(request.id, "rejected", approve, reject);
-      });
-      card.appendChild(reject);
-      adminRequestsList.appendChild(card);
-    });
-  } catch (error) {
-    adminRequestsMessage.textContent = "Could not load requests: " + (error.message || "Unknown error") +
-      ". Confirm you are signed in as an approved District Administrator and that the account_requests SELECT policy is enabled.";
-  } finally {
-    if (refreshRequestsButton) refreshRequestsButton.disabled = false;
-  }
-}
-
-async function reviewAccountRequest(requestId, decision, approveButton, rejectButton) {
-  const verb = decision === "approved" ? "approve" : "reject";
-  if (!window.confirm("Are you sure you want to " + verb + " this access request?")) return;
-  if (approveButton) approveButton.disabled = true;
-  if (rejectButton) rejectButton.disabled = true;
-  if (adminRequestsMessage) adminRequestsMessage.textContent = "Processing " + verb + "al...";
-
-  try {
-    const { data, error } = await supabaseClient.rpc("review_e_nexus_account_request", {
-      p_request_id: requestId,
-      p_decision: decision
-    });
-    if (error) throw error;
-    if (adminRequestsMessage) adminRequestsMessage.textContent = data || ("Request " + decision + ".");
-    await loadAccountRequests();
-  } catch (error) {
-    if (adminRequestsMessage) adminRequestsMessage.textContent = "Could not " + verb + " request: " +
-      (error.message || "Unknown error");
-    if (approveButton) approveButton.disabled = false;
-    if (rejectButton) rejectButton.disabled = false;
-  }
-}
-
-if (refreshRequestsButton) {
-  refreshRequestsButton.addEventListener("click", loadAccountRequests);
-}
-
-if (loginForm && emailInput && passwordInput && message) {
-  loginForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
-
-    const submitButton = loginForm.querySelector('button[type="submit"]');
-    if (submitButton) submitButton.disabled = true;
-
-    message.textContent = "Signing in...";
-
-    try {
-      const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-          email: emailInput.value.trim(),
-          password: passwordInput.value
-        });
-
-      if (error) throw error;
-
-      const profile = await verifyProfile(data.user);
-      currentAdminUser = data.user;
-
-      passwordInput.value = "";
-      message.textContent = "";
-      showDashboard(profile);
-
-    } catch (error) {
-      await supabaseClient.auth.signOut();
-      showLogin();
-
-      message.textContent =
-        error.message === "Invalid login credentials"
-          ? "Incorrect email or password."
-          : error.message || "Sign-in failed. Please try again.";
-    } finally {
-      if (submitButton) submitButton.disabled = false;
-    }
-  });
-}
-
-
-// ---------- Announcements and Circulars ----------
-function localDateTimeToIso(value) {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
-}
-
-function isoToLocalDateTime(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16);
-}
-
-function resetAnnouncementForm() {
-  if (announcementForm) announcementForm.reset();
-  if (announcementIdInput) announcementIdInput.value = "";
-  if (announcementMessage) announcementMessage.textContent = "";
-}
-
-async function saveAnnouncement(status) {
-  if (!currentAdminUser) {
-    if (announcementMessage) announcementMessage.textContent = "Please sign in again as an administrator.";
-    return;
-  }
-  if (!announcementForm.reportValidity()) return;
-
-  const title = announcementTitleInput.value.trim();
-  const content = announcementContentInput.value.trim();
-  if (!title || !content) {
-    announcementMessage.textContent = "Enter both a title and message.";
-    return;
-  }
-
-  const isPublished = status === "published";
-  const expiresAt = localDateTimeToIso(announcementExpiresInput.value);
-  if (announcementExpiresInput.value && !expiresAt) {
-    announcementMessage.textContent = "Please enter a valid expiration date and time.";
-    return;
-  }
-  if (isPublished && expiresAt && new Date(expiresAt) <= new Date()) {
-    announcementMessage.textContent = "The expiration date must be in the future.";
-    return;
-  }
-
-  const id = announcementIdInput.value;
-  const payload = {
-    title,
-    category: announcementCategoryInput.value,
-    content,
-    status,
-    published_at: isPublished ? new Date().toISOString() : null,
-    expires_at: expiresAt,
-    updated_by: currentAdminUser.id,
-    updated_at: new Date().toISOString()
-  };
-
-  saveDraftButton.disabled = true;
-  publishAnnouncementButton.disabled = true;
-  announcementMessage.textContent = status === "published" ? "Publishing announcement..." : "Saving draft...";
-
-  try {
-    let result;
-    if (id) {
-      result = await supabaseClient
-        .from("e_nexus_announcements")
-        .update(payload)
-        .eq("id", id)
-        .select("id")
-        .single();
-    } else {
-      result = await supabaseClient
-        .from("e_nexus_announcements")
-        .insert({ ...payload, created_by: currentAdminUser.id })
-        .select("id")
-        .single();
-    }
-    if (result.error) throw result.error;
-
-    announcementMessage.textContent = status === "published"
-      ? "Announcement published successfully."
-      : "Draft saved successfully.";
-    resetAnnouncementForm();
-    await loadAdminAnnouncements();
-    await loadPublicAnnouncements();
-  } catch (error) {
-    announcementMessage.textContent = "Could not save announcement: " + (error.message || "Unknown error");
-  } finally {
-    saveDraftButton.disabled = false;
-    publishAnnouncementButton.disabled = false;
-  }
-}
-
-async function loadAdminAnnouncements() {
-  if (!adminAnnouncementsList || !announcementMessage) return;
-  adminAnnouncementsList.replaceChildren();
-  announcementMessage.textContent = "Loading announcements...";
-  if (adminAnnouncementsRefresh) adminAnnouncementsRefresh.disabled = true;
-
-  try {
-    const { data, error } = await supabaseClient
-      .from("e_nexus_announcements")
-      .select("id, title, category, content, status, published_at, expires_at, created_at")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      announcementMessage.textContent = "No announcements yet. Create one using the form above.";
-      return;
-    }
-
-    announcementMessage.textContent = data.length + " announcement(s) found.";
-    data.forEach(function (item) {
-      const card = document.createElement("article");
-      card.style.cssText = "margin:14px 0; padding:14px; border:1px solid #d1d5db; border-radius:8px;";
-      const heading = document.createElement("h4");
-      heading.textContent = item.title;
-      card.appendChild(heading);
-
-      const meta = document.createElement("p");
-      meta.textContent = item.category + " | Status: " + item.status +
-        " | Created: " + formatRequestDate(item.created_at) +
-        (item.expires_at ? " | Expires: " + formatRequestDate(item.expires_at) : "");
-      card.appendChild(meta);
-
-      const preview = document.createElement("p");
-      preview.textContent = item.content.length > 300 ? item.content.slice(0, 300) + "…" : item.content;
-      card.appendChild(preview);
-
-      const edit = document.createElement("button");
-      edit.type = "button";
-      edit.textContent = "Edit";
-      edit.style.cssText = "padding:8px 12px; margin:4px; cursor:pointer;";
-      edit.addEventListener("click", function () {
-        announcementIdInput.value = item.id;
-        announcementTitleInput.value = item.title;
-        announcementCategoryInput.value = item.category;
-        announcementContentInput.value = item.content;
-        announcementExpiresInput.value = isoToLocalDateTime(item.expires_at);
-        announcementMessage.textContent = "Editing: " + item.title + ". Choose Save Draft or Publish to save changes.";
-        announcementForm.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-      card.appendChild(edit);
-
-      if (item.status !== "archived") {
-        const archive = document.createElement("button");
-        archive.type = "button";
-        archive.textContent = "Archive";
-        archive.style.cssText = "padding:8px 12px; margin:4px; cursor:pointer;";
-        archive.addEventListener("click", async function () {
-          if (!window.confirm('Archive "' + item.title + '"?')) return;
-          archive.disabled = true;
-          try {
-            const { error: updateError } = await supabaseClient
-              .from("e_nexus_announcements")
-              .update({ status: "archived", updated_by: currentAdminUser.id, updated_at: new Date().toISOString() })
-              .eq("id", item.id);
-            if (updateError) throw updateError;
-            announcementMessage.textContent = "Announcement archived.";
-            await loadAdminAnnouncements();
-            await loadPublicAnnouncements();
-          } catch (error) {
-            announcementMessage.textContent = "Could not archive announcement: " + (error.message || "Unknown error");
-            archive.disabled = false;
-          }
-        });
-        card.appendChild(archive);
-      }
-      adminAnnouncementsList.appendChild(card);
-    });
-  } catch (error) {
-    announcementMessage.textContent = "Could not load announcements: " + (error.message || "Unknown error");
-  } finally {
-    if (adminAnnouncementsRefresh) adminAnnouncementsRefresh.disabled = false;
-  }
-}
-
-async function loadPublicAnnouncements() {
-  if (!publicAnnouncementsList || !publicAnnouncementsMessage) return;
-  publicAnnouncementsList.replaceChildren();
-  publicAnnouncementsMessage.textContent = "Loading published announcements...";
-  if (publicAnnouncementsRefresh) publicAnnouncementsRefresh.disabled = true;
-
-  try {
-    const { data, error } = await supabaseClient
-      .from("e_nexus_announcements")
-      .select("id, title, category, content, published_at, expires_at")
-      .eq("status", "published")
-      .or("published_at.is.null,published_at.lte." + new Date().toISOString())
-      .order("published_at", { ascending: false, nullsFirst: false });
-    if (error) throw error;
-
-    const now = Date.now();
-    const current = (data || []).filter(item => !item.expires_at || new Date(item.expires_at).getTime() > now);
-    if (current.length === 0) {
-      publicAnnouncementsMessage.textContent = "There are no current published announcements.";
-      return;
-    }
-
-    publicAnnouncementsMessage.textContent = current.length + " current announcement(s).";
-    current.forEach(function (item) {
-      const card = document.createElement("article");
-      card.style.cssText = "margin:14px 0; padding:16px; border:1px solid #dce4ef; border-radius:10px; background:#fff;";
-      const heading = document.createElement("h3");
-      heading.textContent = item.title;
-      heading.style.color = "#12345a";
-      card.appendChild(heading);
-      const meta = document.createElement("p");
-      meta.style.cssText = "font-size:13px; color:#65748b;";
-      meta.textContent = item.category + (item.published_at ? " | Published: " + formatRequestDate(item.published_at) : "");
-      card.appendChild(meta);
-      const content = document.createElement("p");
-      content.style.whiteSpace = "pre-wrap";
-      content.textContent = item.content;
-      card.appendChild(content);
-      publicAnnouncementsList.appendChild(card);
-    });
-  } catch (error) {
-    publicAnnouncementsMessage.textContent = "Could not load announcements: " + (error.message || "Unknown error");
-  } finally {
-    if (publicAnnouncementsRefresh) publicAnnouncementsRefresh.disabled = false;
-  }
-}
-
-if (saveDraftButton) saveDraftButton.addEventListener("click", () => saveAnnouncement("draft"));
-if (publishAnnouncementButton) publishAnnouncementButton.addEventListener("click", () => saveAnnouncement("published"));
-if (clearAnnouncementButton) clearAnnouncementButton.addEventListener("click", resetAnnouncementForm);
-if (adminAnnouncementsRefresh) adminAnnouncementsRefresh.addEventListener("click", loadAdminAnnouncements);
-if (publicAnnouncementsRefresh) publicAnnouncementsRefresh.addEventListener("click", loadPublicAnnouncements);
-
-if (logoutButton) {
-  logoutButton.addEventListener("click", async function () {
-    logoutButton.disabled = true;
-
-    try {
-      const { error } = await supabaseClient.auth.signOut();
-      if (error) throw error;
-
-      showLogin();
-      message.textContent = "You have signed out successfully.";
-    } catch (error) {
-      message.textContent = "Unable to sign out. Please try again.";
-    } finally {
-      logoutButton.disabled = false;
-    }
-  });
-}
-
-// Load public announcements on page load.
-loadPublicAnnouncements();
-
-// Restore an existing session and verify its account.
-(async function restoreSession() {
-  try {
-    const { data, error } = await supabaseClient.auth.getSession();
-    if (error) throw error;
-
-    if (data.session) {
-      const profile = await verifyProfile(data.session.user);
-      currentAdminUser = data.session.user;
-      showDashboard(profile);
-    } else {
-      showLogin();
-    }
-  } catch (error) {
-    await supabaseClient.auth.signOut();
-    showLogin();
-  }
-})();
-
+function openModal(title,body){$('#modalcontent').innerHTML=`<h3>${title}</h3>${body}`;$('#modalback').style.display='flex'}
+function closeModal(){$('#modalback').style.display='none'}
+function field(label,name,value='',type='text',opts=null,full=false){let control=opts?`<select name="${name}">${opts.map(o=>`<option value="${esc(o)}" ${String(value)===String(o)?'selected':''}>${esc(o)}</option>`).join('')}</select>`:type==='textarea'?`<textarea name="${name}">${esc(value)}</textarea>`:`<input name="${name}" type="${type}" value="${esc(value)}" ${type==='number'?'min="0"':''}>`;return `<div class="formgroup ${full?'full':''}"><label>${label}</label>${control}</div>`}
+function formWrap(id,fields){return `<form id="${id}"><div class="formgrid">${fields.join('')}</div><div class="formactions"><button type="button" class="secondary" onclick="closeModal()">Cancel</button><button type="submit">Save record</button></div></form>`}
+function projectForm(id=null){let p=id?db.projects.find(x=>x.id===id):{};openModal(id?'Edit project':'Register a project',formWrap('projectForm',[field('Project name *','name',p.name||''),field('Project lead / owner','owner',p.owner||''),field('Start date','start',p.start||today(),'date'),field('Target end date','end',p.end||'','date'),field('Status','status',p.status||'Planned','text',['Planned','In Progress','On Hold','Completed','Cancelled']),field('Progress (%)','progress',p.progress??0,'number'),field('Budget / resource note','budget',p.budget||''),field('Objective','objective',p.objective||'','textarea',null,true),field('Notes','notes',p.notes||'','textarea',null,true)]));$('#projectForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim())return toast('Project name is required.');x.progress=Math.min(100,Number(x.progress)||0);if(id){Object.assign(p,x);log('Updated project: '+x.name)}else{x.id='PRJ-'+uid();db.projects.push(x);log('Created project: '+x.name)}save();closeModal();render();toast('Project saved.')}}
+function indicatorForm(id=null){let i=id?db.indicators.find(x=>x.id===id):{};openModal(id?'Edit performance indicator':'Add performance indicator',formWrap('indicatorForm',[field('Indicator name *','name',i.name||''),field('Linked project','project',i.project||db.projects[0]?.id||'','text',db.projects.map(p=>p.id)),field('Target value','target',i.target??0,'number'),field('Actual value','actual',i.actual??0,'number'),field('Unit / measure','unit',i.unit||''),field('Last updated','date',i.date||today(),'date'),field('Evidence / notes','notes',i.notes||'','textarea',null,true)]));$('#indicatorForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim())return toast('Indicator name is required.');x.target=Number(x.target)||0;x.actual=Number(x.actual)||0;if(id){Object.assign(i,x);log('Updated indicator: '+x.name)}else{x.id='IND-'+uid();db.indicators.push(x);log('Added indicator: '+x.name)}save();closeModal();render();toast('Indicator saved.')}}
+function docForm(id=null){let d=id?db.docs.find(x=>x.id===id):{};openModal(id?'Edit document record':'Register a document',formWrap('docForm',[field('Document title *','title',d.title||''),field('Document type','type',d.type||'Memorandum','text',['Memorandum','Letter','Project Plan','Accomplishment Report','Financial Document','Request','Purchase / Procurement','Personnel Record','Other']),field('Originating person / office','from',d.from||''),field('Receiving person / office','to',d.to||''),field('Date received / registered','date',d.date||today(),'date'),field('Due date','due',d.due||'','date'),field('Status','status',d.status||'Received','text',['Received','For Review','Routed','Pending Action','Approved','Released','Returned','Completed','Closed']),field('Priority','priority',d.priority||'Normal','text',['Low','Normal','High','Urgent']),field('Current location / office','location',d.location||''),field('Remarks / file reference','remarks',d.remarks||'','textarea',null,true)]));$('#docForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.title.trim())return toast('Document title is required.');if(id){Object.assign(d,x);log('Updated document record: '+x.title)}else{x.id='DOC-'+new Date().getFullYear()+'-'+uid();db.docs.push(x);log('Registered document: '+x.title)}save();closeModal();render();toast('Document saved.')}}
+function routeForm(id){let d=db.docs.find(x=>x.id===id);if(!d)return;openModal('Update / route document',`<div class="notice">Document: <strong>${esc(d.title)}</strong> (${esc(d.id)}). Update the status and destination to reflect the real transaction.</div>${formWrap('routeForm',[field('Current status','status',d.status,'text',['Received','For Review','Routed','Pending Action','Approved','Released','Returned','Completed','Closed']),field('Route to / responsible office','to',d.to||''),field('Current location','location',d.location||''),field('Due date','due',d.due||'','date'),field('Remarks / action taken','remarks',d.remarks||'','textarea',null,true)])}`);$('#routeForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));Object.assign(d,x);log(`Routed/updated ${d.id}: ${d.status} → ${d.to||'unspecified destination'}`);save();closeModal();render();toast('Document workflow updated.')}}
+function download(name,content,type='text/plain;charset=utf-8'){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function csv(rows){if(!rows.length)return '';let keys=[...new Set(rows.flatMap(o=>Object.keys(o)))];return [keys.join(','),...rows.map(r=>keys.map(k=>'"'+String(r[k]??'').replace(/"/g,'""')+'"').join(','))].join('\r\n')}
+function reportText(){let lines=['PROJECT e-NEXUS — PROGRAM MANAGEMENT AND EVALUATION REPORT','Generated: '+new Date().toLocaleString(),'','1. PROJECT SUMMARY'];db.projects.forEach(p=>lines.push(`- ${p.name} (${p.id}): ${p.status}; progress ${p.progress}%; lead ${p.owner||'Not assigned'}; timeline ${p.start||'—'} to ${p.end||'—'}. Objective: ${p.objective||'Not entered'}`));lines.push('','2. PERFORMANCE INDICATORS');db.indicators.forEach(i=>lines.push(`- ${i.name} (${i.id}), project: ${projectName(i.project)}; actual ${i.actual} / target ${i.target} ${i.unit||''}; achievement ${Number(i.target)>0?Math.round(Number(i.actual)/Number(i.target)*100):0}%. Notes: ${i.notes||'—'}`));lines.push('','3. DOCUMENT WORKFLOW SUMMARY',`Total documents: ${db.docs.length}`);db.docs.forEach(d=>lines.push(`- ${d.id}: ${d.title}; status ${d.status}; from ${d.from||'—'} to ${d.to||'—'}; location ${d.location||'—'}; registered ${d.date||'—'}.`));lines.push('','Note: Validate source records, evidence, and figures before official submission. This report reflects data stored in this browser.');return lines.join('\n')}
+function wire(){let s=$('#search');if(s)s.oninput=()=>{query=s.value;let pos=s.selectionStart;render();let n=$('#search');n.focus();n.setSelectionRange(pos,pos)};let f=$('#statusFilter');if(f)f.onchange=()=>{filter=f.value;render()};let cf=$('#chatForm');if(cf)cf.onsubmit=e=>{e.preventDefault();let input=cf.elements.message;let msg=input.value.trim();if(!msg)return;(db.chats[currentChat]|| (db.chats[currentChat]=[])).push({sender:currentUser.name,text:msg,time:new Date().toLocaleString()});log('Sent message in '+currentChat);save();render();let cm=$('#chatmessages');if(cm)cm.scrollTop=cm.scrollHeight};document.querySelectorAll('[data-chat]').forEach(b=>b.onclick=()=>{currentChat=b.dataset.chat;render()});document.querySelectorAll('[data-login]').forEach(b=>b.onclick=()=>loginAs(b.dataset.login));document.querySelectorAll('[data-edit-activity]').forEach(b=>b.onclick=()=>activityForm(b.dataset.editActivity));document.querySelectorAll('[data-delete-activity]').forEach(b=>b.onclick=()=>{if(confirm('Delete this activity?')){db.activities=db.activities.filter(a=>a.id!==b.dataset.deleteActivity);save();render();toast('Activity deleted.')}});document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>setPage(b.dataset.go));document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>action(b.dataset.action));document.querySelectorAll('[data-edit-project]').forEach(b=>b.onclick=()=>projectForm(b.dataset.editProject));document.querySelectorAll('[data-delete-project]').forEach(b=>b.onclick=()=>{let id=b.dataset.deleteProject;if(confirm('Delete this project and its project record?')){db.projects=db.projects.filter(p=>p.id!==id);log('Deleted project '+id);save();render();toast('Project deleted.')}});document.querySelectorAll('[data-edit-indicator]').forEach(b=>b.onclick=()=>indicatorForm(b.dataset.editIndicator));document.querySelectorAll('[data-delete-indicator]').forEach(b=>b.onclick=()=>{if(confirm('Delete this indicator?')){db.indicators=db.indicators.filter(i=>i.id!==b.dataset.deleteIndicator);save();render();toast('Indicator deleted.')}});document.querySelectorAll('[data-edit-doc]').forEach(b=>b.onclick=()=>docForm(b.dataset.editDoc));document.querySelectorAll('[data-route-doc]').forEach(b=>b.onclick=()=>routeForm(b.dataset.routeDoc));let imp=$('#importFile');if(imp)imp.onchange=async()=>{try{let d=JSON.parse(await imp.files[0].text());if(!d.projects||!d.docs||!d.indicators)throw Error();if(confirm('Replace current data with this backup?')){db=d;save();render();toast('Backup imported.')}}catch(e){toast('Could not import: invalid backup file.')}}}
+function action(a){if(a==='add-activity')return activityForm();if(a==='add-chat')return addChatForm();if(a==='add-user')return addUserForm();if(a==='export-activities')return download('enexus-activities.csv',csv(db.activities),'text/csv;charset=utf-8');if(a==='add-project')return projectForm();if(a==='add-indicator')return indicatorForm();if(a==='add-doc')return docForm();if(a==='export-projects')return download('enexus-projects.csv',csv(db.projects),'text/csv;charset=utf-8');if(a==='export-indicators')return download('enexus-indicators.csv',csv(db.indicators),'text/csv;charset=utf-8');if(a==='export-docs')return download('enexus-documents.csv',csv(db.docs),'text/csv;charset=utf-8');if(a==='export-all')return download('enexus-backup.json',JSON.stringify(db,null,2),'application/json');if(a==='generate-report'){let el=$('#reportPreview');if(el)el.textContent=reportText();else{openModal('Generated report',`<div class="reportbox">${esc(reportText())}</div><div class="formactions"><button onclick="download('enexus-report.txt',reportText())">Download report</button></div>`)}return}if(a==='download-report')return download('enexus-accomplishment-report.txt',reportText());if(a==='reset-data'){if(confirm('Reset all current records in this browser to the original sample data? Export a backup first if needed.')){db=JSON.parse(JSON.stringify(seed));save();log('Reset workspace to sample data');render();toast('Sample data restored.')}}}
+render();
 </script>
-<!-- End e-NEXUS login handler -->
-
 </body>
 </html>
