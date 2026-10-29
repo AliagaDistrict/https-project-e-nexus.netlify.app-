@@ -174,8 +174,8 @@ async function loadAuthenticatedUser(authUser){
 async function initAuth(){
  // Replace these two placeholders with your project's URL and publishable key.
  // Never place a service_role/secret key in browser code.
- const SUPABASE_URL='YOUR_SUPABASE_PROJECT_URL';
- const SUPABASE_PUBLISHABLE_KEY='YOUR_SUPABASE_PUBLISHABLE_KEY';
+ const SUPABASE_URL='https://alghuoouwcrplxtlzkdo.supabase.co';
+ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_E4Dx9kQHJj9rbeU6Anxk2A_-y9QN9EA';
  if(!window.supabase||SUPABASE_URL.startsWith('YOUR_')||SUPABASE_PUBLISHABLE_KEY.startsWith('YOUR_')){
    currentUser=null;showLogin('login','Setup required: configure Supabase Authentication and replace the two placeholder values in the JavaScript.');return;
  }
