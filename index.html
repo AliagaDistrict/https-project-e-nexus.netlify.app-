@@ -143,19 +143,7 @@ function showLogin(mode='login', message=''){
    const data=Object.fromEntries(new FormData(e.target));const email=data.email.trim().toLowerCase();
    try{
     if(isRegister){
-      
-const { data: result, error } = await authClient.auth.signUp({
-  email: email,
-  password: data.password,
-  options: {
-    emailRedirectTo: 'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/',
-    data: {
-      full_name: data.full_name.trim(),
-      agency: data.agency.trim()
-    }
-  }
-});
-
+      const {data:result,error}=await authClient.auth.signUp({email,password:data.password,options:{data:{full_name:data.full_name.trim(),agency:data.agency.trim()}}});
       if(error)throw error;
       if(result.session){await loadAuthenticatedUser(result.session.user);}
       else showLogin('login','Registration submitted. Check your email if confirmation is enabled. Your account must be approved by an administrator before access is granted.');
@@ -213,9 +201,27 @@ async function loadUsersDirectory(){
  if(error){host.innerHTML=`<div class="notice">Could not load registered accounts. Check that the updated SQL setup was run and that the profiles table has an email column. Details: ${esc(error.message)}</div>`;return;}
  if(!users||!users.length){host.innerHTML='<div class="empty">No registered accounts found yet.</div>';return;}
  const roles=['Administrator','School Administrator','Project Coordinator','School Personnel','Records Officer','Partner Agency'];
- host.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td><strong>${esc(u.full_name||'Name not provided')}</strong><span class="sub">${esc((u.id||'').slice(0,8))}…</span></td><td>${esc(u.email||'Email unavailable')}</td><td>${esc(u.agency||'—')}</td><td><select data-user-role="${esc(u.id)}">${roles.map(r=>`<option value="${esc(r)}" ${u.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${u.approved?'<span class="pill green">Approved / Active</span>':'<span class="pill amber">Pending approval</span>'}</td><td><div class="actions"><button data-save-user="${esc(u.id)}">Save role</button><button class="secondary" data-toggle-user="${esc(u.id)}" data-approved="${u.approved?'true':'false'}">${u.approved?'Revoke access':'Approve account'}</button></div></td></tr>`).join('')}</tbody></table></div>`;
+ host.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td><strong>${esc(u.full_name||'Name not provided')}</strong><span class="sub">${esc((u.id||'').slice(0,8))}…</span></td><td>${esc(u.email||'Email unavailable')}</td><td>${esc(u.agency||'—')}</td><td><select data-user-role="${esc(u.id)}">${roles.map(r=>`<option value="${esc(r)}" ${u.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${u.approved?'<span class="pill green">Approved / Active</span>':'<span class="pill amber">Pending approval</span>'}</td><td><div class="actions"><button data-save-user="${esc(u.id)}">Save role</button><button class="secondary" data-toggle-user="${esc(u.id)}" data-approved="${u.approved?'true':'false'}">${u.approved?'Revoke access':'Approve account'}</button><button type="button" data-delete-user="${esc(u.id)}" style="background:#b42318;color:white;border-color:#b42318" ${u.id===currentUser.id?'disabled title="You cannot delete your own account"':''}>Delete User</button></div></td></tr>`).join('')}</tbody></table></div>`;
  host.querySelectorAll('[data-save-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.saveUser;const select=host.querySelector(`[data-user-role="${id}"]`);const role=select?.value;if(!role)return;btn.disabled=true;const {error}=await authClient.from('profiles').update({role}).eq('id',id);btn.disabled=false;if(error){toast('Could not save role: '+error.message);return;}toast('Role updated.');loadUsersDirectory();});
  host.querySelectorAll('[data-toggle-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.toggleUser;const approved=btn.dataset.approved!=='true';if(id===currentUser.id&&!approved){toast('You cannot revoke your own access here.');return;}btn.disabled=true;const {error}=await authClient.from('profiles').update({approved}).eq('id',id);btn.disabled=false;if(error){toast('Could not update account: '+error.message);return;}toast(approved?'Account approved.':'Account access revoked.');loadUsersDirectory();});
+ host.querySelectorAll('[data-delete-user]').forEach(btn=>btn.onclick=async()=>{
+   const id=btn.dataset.deleteUser;
+   if(id===currentUser.id){toast('You cannot delete your own administrator account.');return;}
+   const user=users.find(u=>u.id===id);
+   if(!user)return;
+   const label=user.email||user.full_name||id;
+   if(!confirm('PERMANENTLY delete the account '+label+'? This removes Supabase login access and may affect related records. This cannot be undone.'))return;
+   const typed=prompt('To confirm permanent deletion, type DELETE:');
+   if(typed!=='DELETE'){toast('Deletion cancelled.');return;}
+   btn.disabled=true;btn.textContent='Deleting…';
+   try{
+     const {data,error}=await authClient.functions.invoke('enexus-delete-user',{body:{user_id:id}});
+     if(error)throw error;
+     if(!data?.success)throw new Error(data?.error||'Deletion was not confirmed by the server.');
+     toast('User account permanently deleted.');
+     await loadUsersDirectory();
+   }catch(err){toast('Could not delete user. Deploy the secure enexus-delete-user Edge Function first. '+(err.message||''));btn.disabled=false;btn.textContent='Delete User';}
+ });
 }
 function activityForm(id=null){let a=id?db.activities.find(x=>x.id===id):{};openModal(id?'Edit activity':'Add school activity / program',formWrap('activityForm',[field('Activity / program title *','title',a.title||''),field('Date','date',a.date||today(),'date'),field('Time','time',a.time||''),field('Venue / meeting link reference','venue',a.venue||''),field('Organizer','organizer',a.organizer||currentUser.name),field('Intended audience','audience',a.audience||'School community and partners'),field('Status','status',a.status||'Upcoming','text',['Planning','Upcoming','Completed','Cancelled']),field('Description / announcement','description',a.description||'','textarea',null,true)]));$('#activityForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.title.trim())return toast('Activity title is required.');if(id)Object.assign(a,x);else{x.id='ACT-'+uid();db.activities.push(x)}log((id?'Updated':'Added')+' activity: '+x.title);save();closeModal();render();toast('Activity saved.')}}
 function addChatForm(){openModal('Create conversation channel',formWrap('chatAddForm',[field('Channel name *','name',''),field('Purpose','purpose','Partner coordination'),field('Initial message','message','Welcome to this channel.','textarea',null,true)]));$('#chatAddForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));let n=x.name.trim();if(!n)return toast('Channel name is required.');if(db.chats[n])return toast('A channel with that name already exists.');db.chats[n]=[{sender:currentUser.name,text:x.message||'Channel created.',time:new Date().toLocaleString()}];currentChat=n;save();closeModal();render();toast('Channel created in this browser.')}}
