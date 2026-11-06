@@ -143,7 +143,19 @@ function showLogin(mode='login', message=''){
    const data=Object.fromEntries(new FormData(e.target));const email=data.email.trim().toLowerCase();
    try{
     if(isRegister){
-      const {data:result,error}=await authClient.auth.signUp({email,password:data.password,options:{data:{full_name:data.full_name.trim(),agency:data.agency.trim()}}});
+      
+const { data: result, error } = await authClient.auth.signUp({
+  email: email,
+  password: data.password,
+  options: {
+    emailRedirectTo: 'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/',
+    data: {
+      full_name: data.full_name.trim(),
+      agency: data.agency.trim()
+    }
+  }
+});
+
       if(error)throw error;
       if(result.session){await loadAuthenticatedUser(result.session.user);}
       else showLogin('login','Registration submitted. Check your email if confirmation is enabled. Your account must be approved by an administrator before access is granted.');
