@@ -168,15 +168,15 @@ function showLogin(mode='login', message=''){
 }
 async function loadAuthenticatedUser(authUser){
  if(!authClient||!authUser){currentUser=null;showLogin();return;}
- const {data:profile,error}=await authClient.from('profiles').select('full_name,agency,role,approved').eq('id',authUser.id).maybeSingle();
+ const {data:profile,error}=await authClient.from('profiles').select('full_name,agency,role,approved,school_name,account_status').eq('id',authUser.id).maybeSingle();
  if(error){currentUser=null;showLogin('login','Could not verify your access profile. Ask the administrator to check the Supabase profiles table and Row Level Security settings.');return;}
- if(!profile||!profile.approved){
+ if(!profile||!profile.approved||profile.account_status!=='Approved'){
    currentUser=null;
    await authClient.auth.signOut();
    showLogin('login','Your account is registered but is awaiting administrator approval. You cannot access the workspace yet.');
    return;
  }
- currentUser={id:authUser.id,email:authUser.email,name:profile.full_name||authUser.email,role:profile.role||'Partner Agency',agency:profile.agency||''};
+ currentUser={id:authUser.id,email:authUser.email,name:profile.full_name||authUser.email,role:profile.role||'Partner Agency',agency:profile.agency||'',school_name:profile.school_name||''};
  if(document.getElementById('authOverlay'))document.getElementById('authOverlay').remove();
  page='dashboard';render();
 }
@@ -295,6 +295,105 @@ let chartRecords=[];
 function chartCard(r){const img=r._url?`<img src="${esc(r._url)}" alt="Personnel photograph" style="width:86px;height:86px;object-fit:cover;border-radius:50%;border:2px solid #dbe3ec">`:'<div class="avatar" style="width:86px;height:86px;font-size:28px">👤</div>';return `<div class="panel" style="text-align:center;min-width:160px;flex:1;max-width:260px">${img}<h4 style="margin:10px 0 3px">${esc(r.full_name)}</h4><div style="font-size:12px;font-weight:700">${esc(r.position)}</div><div style="font-size:11px;color:#66788a">${esc(r.office||'')}</div>${cloudCanEdit('orgchart')?`<div class="actions" style="justify-content:center;margin-top:12px"><button class="secondary" data-chart-edit="${esc(r.id)}">Edit</button><button class="danger" data-chart-delete="${esc(r.id)}">Remove</button></div>`:''}</div>`}
 async function loadOrgChart(){const host=$('#cloudList');if(!host||!authClient)return;const {data,error}=await authClient.from('enexus_org_chart').select('*').order('created_at',{ascending:true}).limit(300);if(page!=='orgchart')return;if(error){host.textContent='Cannot load chart: '+error.message+' — review Phase 2 and Phase 3 SQL.';return;}chartRecords=data||[];await Promise.all(chartRecords.map(async r=>{if(r.photo_path){const {data}=await authClient.storage.from('enexus-personnel-photos').createSignedUrl(r.photo_path,600);r._url=data?.signedUrl||'';}}));const group=c=>chartRecords.filter(r=>r.category===c);const section=(c)=>`<div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap">${group(c).map(chartCard).join('')||'<div class="notice">'+esc(c)+' — no personnel assigned</div>'}</div>`;host.innerHTML=`${section('School Principal')}<div style="text-align:center;font-size:24px;margin:8px">↓</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${['System Administrator','ICT Coordinator','Program Coordinator'].map(c=>`<div><div style="text-align:center;font-size:12px;font-weight:700;margin-bottom:8px">${esc(c)}</div>${section(c)}</div>`).join('')}</div><div style="text-align:center;font-size:24px;margin:8px">↓</div><h3 style="text-align:center">School Personnel</h3>${section('School Personnel')}`;const add=$('#cloudAdd');if(add)add.onclick=()=>chartForm();const reload=$('#cloudReload');if(reload)reload.onclick=()=>loadOrgChart();host.querySelectorAll('[data-chart-edit]').forEach(b=>b.onclick=()=>chartForm(chartRecords.find(r=>r.id===b.dataset.chartEdit)));host.querySelectorAll('[data-chart-delete]').forEach(b=>b.onclick=async()=>{if(!confirm('Remove this person from the chart? Their login account will not be deleted.'))return;const {error}=await authClient.from('enexus_org_chart').delete().eq('id',b.dataset.chartDelete);if(error)return toast(error.message);toast('Chart entry removed.');loadOrgChart()});}
 function chartForm(r=null){if(!cloudCanEdit('orgchart'))return;const categories=chartCategories.map(c=>`<option value="${esc(c)}" ${r?.category===c?'selected':''}>${esc(c)}</option>`).join('');openModal(r?'Edit chart entry':'Add chart entry',`<form id="chartForm"><div class="formgrid">${field('Full name *','full_name',r?.full_name||'')}${field('Position *','position',r?.position||'')}${field('Office / Unit','office',r?.office||'')}<div class="formgroup"><label>Chart level *</label><select name="category">${categories}</select></div><div class="formgroup full"><label>Photograph (JPG, PNG or WebP, up to 2 MB)</label><input type="file" name="photo" accept="image/jpeg,image/png,image/webp"></div></div><div class="formactions"><button type="button" class="secondary" onclick="closeModal()">Cancel</button><button type="submit">Save entry</button></div></form>`);$('#chartForm').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);const full_name=String(fd.get('full_name')||'').trim(),position=String(fd.get('position')||'').trim(),office=String(fd.get('office')||'').trim(),category=String(fd.get('category'));if(!full_name||!position)return toast('Name and position are required.');const photo=fd.get('photo');let photo_path=r?.photo_path||null;if(photo&&photo.size){if(photo.size>2*1024*1024||!['image/jpeg','image/png','image/webp'].includes(photo.type))return toast('Use JPG, PNG, or WebP under 2 MB.');const extension=photo.type==='image/png'?'png':photo.type==='image/webp'?'webp':'jpg';const path=currentUser.id+'/'+crypto.randomUUID()+'.'+extension;const {error:uploadError}=await authClient.storage.from('enexus-personnel-photos').upload(path,photo,{contentType:photo.type,upsert:false});if(uploadError)return toast('Photo upload failed: '+uploadError.message);photo_path=path;}const values={full_name,position,office,category,photo_path};const {error}=r?await authClient.from('enexus_org_chart').update(values).eq('id',r.id):await authClient.from('enexus_org_chart').insert({...values,created_by:currentUser.id});if(error)return toast('Save failed: '+error.message);closeModal();toast('Organizational chart saved.');loadOrgChart();};}
+
+
+// Project e-NEXUS: authenticated, school-scoped Supabase project attachments.
+// All authorization decisions are enforced by Supabase RLS and RPC functions.
+const ENEXUS_FILE_BUCKET='enexus-project-files';
+const ENEXUS_FILE_TYPES=['application/pdf','image/jpeg','image/png'];
+const ENEXUS_FILE_MAX=20*1024*1024;
+let enexusFileProject='',enexusFileBusy=false,enexusFileRequest=0;
+const enexusFileProjects=()=>db.projects.filter(p=>String(p.id).startsWith('CLOUD-')&&p.school_name);
+const enexusFileCanManage=()=>['Administrator','School Administrator','Project Coordinator','ICT Coordinator Moderator'].includes(currentUser?.role);
+function enexusFilePanel(){
+ const projects=enexusFileProjects();
+ if(!projects.length)return `<section class="panel" style="margin-top:20px"><h3>Project Attachments</h3><p class="sectiondesc">No shared Supabase projects are available to your account. Project attachments require a linked project.</p></section>`;
+ if(!projects.some(p=>p.id===enexusFileProject))enexusFileProject=projects[0].id;
+ return `<section class="panel" style="margin-top:20px" id="enexusAttachments"><div class="panelhead"><div><h3>Project Attachments</h3><p>Secure PDFs, receipts, certificates, accomplishment reports, and programs of work. Files are private and school-scoped.</p></div><button class="secondary" id="enexusFileRefresh" type="button">Refresh</button></div>
+ <div class="formgroup" style="margin-bottom:14px"><label for="enexusFileProject">Select shared project</label><select id="enexusFileProject">${projects.map(p=>`<option value="${esc(p.id)}" ${p.id===enexusFileProject?'selected':''}>${esc(p.name)} — ${esc(p.school_name)}</option>`).join('')}</select></div>
+ ${enexusFileCanManage()?`<form id="enexusFileUpload" class="panel" style="background:#f8fafc;margin-bottom:16px"><h4 style="margin:0 0 12px">Upload attachment</h4><div class="formgrid"><div class="formgroup"><label for="enexusFileCategory">Document category</label><select id="enexusFileCategory" required><option>Accomplishment Report</option><option>Certificate of Completion</option><option>Program of Work</option><option>Receipt</option><option>Other</option></select></div><div class="formgroup"><label for="enexusFileInput">Select PDF or image (maximum 20 MB)</label><input id="enexusFileInput" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required></div></div><div class="formactions"><button type="submit" id="enexusFileUploadButton">Upload File</button></div><p style="font-size:11px;color:var(--muted);margin:8px 0 0">Upload is available only for projects and schools permitted by the database. Do not upload confidential files until your deployment has passed a full access review.</p></form>`:''}
+ <div id="enexusFileList" aria-live="polite">Loading project attachments…</div>
+ ${enexusFileCanManage()?`<div style="margin-top:20px"><div class="panelhead"><div><h3>Recycle Bin</h3><p>Restore deleted files within 30 days. Permanent storage cleanup requires a separate trusted server-side process.</p></div></div><div id="enexusRecycleList" aria-live="polite">Loading deleted files…</div></div>`:''}</section>`;
+}
+function enexusMountFiles(){
+ const host=document.querySelector('#enexusAttachments');if(!host)return;
+ document.querySelector('#enexusFileProject').onchange=e=>{enexusFileProject=e.target.value;enexusLoadFiles()};
+ document.querySelector('#enexusFileRefresh').onclick=()=>enexusLoadFiles();
+ const form=document.querySelector('#enexusFileUpload');if(form)form.onsubmit=enexusUploadFile;
+ enexusLoadFiles();
+}
+async function enexusLoadFiles(){
+ const project=enexusFileProjects().find(p=>p.id===enexusFileProject);
+ const list=document.querySelector('#enexusFileList'),recycle=document.querySelector('#enexusRecycleList');
+ if(!list||!project||!authClient||!currentUser)return;
+ const request=++enexusFileRequest;
+ list.textContent='Loading attachments…';if(recycle)recycle.textContent='Loading Recycle Bin…';
+ const projectId=project.id.slice(6);
+ const {data,error}=await authClient.from('enexus_project_files').select('id,project_id,school_name,category,original_filename,storage_path,content_type,uploaded_at').eq('project_id',projectId).eq('school_name',project.school_name).is('deleted_at',null).order('uploaded_at',{ascending:false});
+ if(request!==enexusFileRequest||!document.querySelector('#enexusFileList'))return;
+ if(error){list.textContent='Cannot load attachments: '+error.message;}
+ else if(!data?.length){list.innerHTML='<div class="empty">No uploaded attachments for this project.</div>';}
+ else{
+ list.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Document</th><th>Category</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>${data.map(f=>`<tr><td><strong>${esc(f.original_filename)}</strong></td><td>${esc(f.category)}</td><td>${esc(new Date(f.uploaded_at).toLocaleString())}</td><td><div class="actions"><button class="secondary" type="button" data-enexus-download="${esc(f.id)}">Download</button>${enexusFileCanManage()?`<button class="danger" type="button" data-enexus-delete="${esc(f.id)}">Delete</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`;
+ list.querySelectorAll('[data-enexus-download]').forEach(b=>b.onclick=()=>enexusDownloadFile(data.find(f=>f.id===b.dataset.enexusDownload)));
+ list.querySelectorAll('[data-enexus-delete]').forEach(b=>b.onclick=()=>enexusDeleteFile(data.find(f=>f.id===b.dataset.enexusDelete)));
+ }
+ if(recycle){
+ const result=await authClient.rpc('enexus_list_recycle_bin');
+ if(request!==enexusFileRequest||!document.querySelector('#enexusRecycleList'))return;
+ if(result.error){recycle.textContent='Cannot load Recycle Bin: '+result.error.message;return;}
+ const rows=(result.data||[]).filter(f=>f.project_id===projectId&&f.school_name===project.school_name);
+ if(!rows.length){recycle.innerHTML='<div class="empty">No deleted files for this project.</div>';return;}
+ recycle.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Document</th><th>Deleted</th><th>Restore deadline</th><th>Actions</th></tr></thead><tbody>${rows.map(f=>`<tr><td><strong>${esc(f.original_filename)}</strong><span class="sub">${esc(f.deletion_reason||'No reason provided')}</span></td><td>${esc(new Date(f.deleted_at).toLocaleString())}</td><td>${esc(new Date(f.restore_deadline).toLocaleString())}</td><td>${new Date(f.restore_deadline)>new Date()?`<button class="secondary" type="button" data-enexus-restore="${esc(f.file_id)}">Restore</button>`:'<span class="pill">Expired</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+ recycle.querySelectorAll('[data-enexus-restore]').forEach(b=>b.onclick=()=>enexusRestoreFile(b.dataset.enexusRestore));
+ }
+}
+async function enexusUploadFile(event){
+ event.preventDefault();if(enexusFileBusy||!authClient||!currentUser)return;
+ const project=enexusFileProjects().find(p=>p.id===enexusFileProject);
+ const file=document.querySelector('#enexusFileInput')?.files?.[0];
+ if(!project||!file)return toast('Select a shared project and a file.');
+ const ext=file.name.split('.').pop().toLowerCase();
+ const valid=(file.type==='application/pdf'&&ext==='pdf')||(file.type==='image/jpeg'&&['jpg','jpeg'].includes(ext))||(file.type==='image/png'&&ext==='png');
+ if(!valid||!ENEXUS_FILE_TYPES.includes(file.type))return toast('Only PDF, JPEG, and PNG files are allowed.');
+ if(file.size>ENEXUS_FILE_MAX||!file.size)return toast('File must be between 1 byte and 20 MB.');
+ const path=project.school_name+'/'+project.id.slice(6)+'/'+crypto.randomUUID()+'.'+ext;
+ const category=document.querySelector('#enexusFileCategory').value;
+ enexusFileBusy=true;const button=document.querySelector('#enexusFileUploadButton');if(button){button.disabled=true;button.textContent='Uploading…';}
+ try{
+  const {error:uploadError}=await authClient.storage.from(ENEXUS_FILE_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+  if(uploadError)throw uploadError;
+  const {error:metadataError}=await authClient.from('enexus_project_files').insert({project_id:project.id.slice(6),school_name:project.school_name,category,original_filename:file.name,storage_path:path,content_type:file.type,uploaded_by:currentUser.id});
+  if(metadataError)throw new Error('Storage upload succeeded but metadata registration failed: '+metadataError.message+'. Contact your administrator to reconcile the orphaned Storage object: '+path);
+  toast('Attachment uploaded successfully.');const input=document.querySelector('#enexusFileInput');if(input)input.value='';await enexusLoadFiles();
+ }catch(error){console.error('Project attachment upload:',error);alert('Upload failed: '+(error.message||String(error)));}
+ finally{enexusFileBusy=false;const b=document.querySelector('#enexusFileUploadButton');if(b){b.disabled=false;b.textContent='Upload File';}}
+}
+async function enexusDownloadFile(file){
+ if(!file||!authClient)return;
+ const {data,error}=await authClient.storage.from(ENEXUS_FILE_BUCKET).download(file.storage_path);
+ if(error)return alert('Download failed: '+error.message);
+ download(file.original_filename,data,file.content_type||'application/octet-stream');
+}
+async function enexusDeleteFile(file){
+ if(!file||!enexusFileCanManage())return;
+ if(!confirm('Move "'+file.original_filename+'" to the Recycle Bin? You may restore it within 30 days.'))return;
+ const reason=prompt('Reason for deletion (optional):','');if(reason===null)return;
+ const {error}=await authClient.rpc('enexus_delete_project_file',{target_file_id:file.id,reason:reason||null});
+ if(error)return alert('Delete failed: '+error.message);
+ toast('File moved to Recycle Bin.');await enexusLoadFiles();
+}
+async function enexusRestoreFile(fileId){
+ if(!enexusFileCanManage()||!confirm('Restore this file?'))return;
+ const {error}=await authClient.rpc('enexus_restore_project_file',{target_file_id:fileId});
+ if(error)return alert('Restore failed: '+error.message);
+ toast('File restored.');await enexusLoadFiles();
+}
+// Extend the existing page without changing its other project-management features.
+const enexusOriginalProjectsPage=projectsPage;
+projectsPage=function(){return enexusOriginalProjectsPage()+enexusFilePanel();};
+const enexusOriginalRender=render;
+render=function(){enexusOriginalRender();if(page==='projects'&&currentUser)enexusMountFiles();};
 
 initAuth();
 </script>
