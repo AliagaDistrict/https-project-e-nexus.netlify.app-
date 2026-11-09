@@ -373,15 +373,38 @@ async function loadUsersDirectory(){
  });
  host.querySelectorAll('[data-save-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.saveUser;const select=host.querySelector(`[data-user-role="${id}"]`);const role=select?.value;if(!role)return;btn.disabled=true;btn.disabled=false;toast('Role changes are locked for security. Use an authorized administrator role-assignment workflow.');loadUsersDirectory();});
  host.querySelectorAll('[data-toggle-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.toggleUser;const approved=btn.dataset.approved!=='true';if(id===currentUser.id&&!approved){toast('You cannot revoke your own access here.');return;}btn.disabled=true;if(!approved){btn.disabled=false;toast('Revoking access requires a separate authorized administrator workflow.');return;}const {error}=await authClient.rpc('enexus_approve_account',{target_user_id:id});btn.disabled=false;if(error){toast('Approval failed: '+error.message+(error.code==='23505'?' (Coordinator position already occupied at this school.)':''));return;}toast('Account approved.');loadUsersDirectory();});
+ async function confirmEnexusUserDeletion(label){
+   // A single Delete/Cancel dialog, with no typed confirmation.
+   if(typeof HTMLDialogElement==='undefined'){
+     return window.confirm('Permanently delete '+label+'? This cannot be undone.');
+   }
+   return new Promise(resolve=>{
+     const dialog=document.createElement('dialog');
+     dialog.setAttribute('aria-label','Confirm user deletion');
+     dialog.style.cssText='border:1px solid #dbe3ec;border-radius:14px;padding:24px;max-width:min(440px,calc(100vw - 32px));width:100%;box-shadow:0 20px 70px #10263e44;color:#1c2b3a;font-family:inherit';
+     const heading=document.createElement('h3');heading.textContent='Delete user account?';heading.style.margin='0 0 12px';
+     const message=document.createElement('p');message.textContent='Permanently delete '+label+'? This removes their login access and may affect related records. This action cannot be undone.';message.style.cssText='line-height:1.5;font-size:14px;margin:0 0 22px';
+     const actions=document.createElement('div');actions.style.cssText='display:flex;justify-content:flex-end;gap:10px';
+     const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancel';cancel.className='secondary';
+     const remove=document.createElement('button');remove.type='button';remove.textContent='Delete';remove.className='danger';
+     actions.append(cancel,remove);dialog.append(heading,message,actions);document.body.appendChild(dialog);
+     let settled=false;
+     const finish=value=>{if(settled)return;settled=true;dialog.close();dialog.remove();resolve(value);};
+     cancel.addEventListener('click',()=>finish(false));
+     remove.addEventListener('click',()=>finish(true));
+     dialog.addEventListener('cancel',event=>{event.preventDefault();finish(false);});
+     dialog.addEventListener('close',()=>finish(false));
+     dialog.showModal();
+     cancel.focus();
+   });
+ }
  host.querySelectorAll('[data-delete-user]').forEach(btn=>btn.onclick=async()=>{
    const id=btn.dataset.deleteUser;
    if(id===currentUser.id){toast('You cannot delete your own administrator account.');return;}
    const user=users.find(u=>u.id===id);
    if(!user)return;
    const label=user.email||user.full_name||id;
-   if(!confirm('PERMANENTLY delete the account '+label+'? This removes Supabase login access and may affect related records. This cannot be undone.'))return;
-   const typed=prompt('To confirm permanent deletion, type DELETE:');
-   if(typed!=='DELETE'){toast('Deletion cancelled.');return;}
+   if(!await confirmEnexusUserDeletion(label))return;
    btn.disabled=true;btn.textContent='Deleting…';
    try{
      const {data,error}=await authClient.functions.invoke('enexus-delete-user',{body:{user_id:id}});
