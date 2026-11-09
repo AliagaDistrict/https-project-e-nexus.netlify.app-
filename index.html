@@ -108,28 +108,11 @@ const today=()=>new Date().toISOString().slice(0,10);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,8).toUpperCase();
 const seed={
- projects:[
- {id:'PRJ-001',name:'School-Based Wellness Program',owner:'School Head',start:today(),end:'2026-12-15',status:'In Progress',progress:60,budget:'',objective:'Support staff wellness through coordinated school activities.',notes:'Sample project — replace with actual project data.'},
- {id:'PRJ-002',name:'Digital Records Improvement',owner:'Records Officer',start:today(),end:'2026-11-30',status:'Planned',progress:15,budget:'',objective:'Improve document organization, routing and retrieval.',notes:'Sample project — replace with actual project data.'}
- ],
- indicators:[
- {id:'IND-001',project:'PRJ-001',name:'Activities completed',target:10,actual:6,unit:'activities',date:today(),notes:'Sample indicator'},
- {id:'IND-002',project:'PRJ-001',name:'Staff participation',target:80,actual:55,unit:'percent',date:today(),notes:'Sample indicator'}
- ],
- docs:[
- {id:'DOC-2026-001',title:'Project Implementation Plan',type:'Project Plan',from:'Project Coordinator',to:'School Head',date:today(),due:'',status:'For Review',priority:'Normal',location:'Project Office',remarks:'Sample document record.'},
- {id:'DOC-2026-002',title:'Monthly Accomplishment Report',type:'Accomplishment Report',from:'Program Lead',to:'Division Office',date:today(),due:'',status:'Received',priority:'High',location:'Records Section',remarks:'Sample document record.'}
- ],
- activities:[
- {id:'ACT-001',title:'School-Based Wellness and Advocacy Program',date:'2026-11-05',time:'9:00 AM',venue:'School Conference Hall',organizer:'School Wellness Team',audience:'School personnel and partners',status:'Upcoming',description:'Sample activity. Confirm details with the school coordinator before sharing.'},
- {id:'ACT-002',title:'Partner Coordination Meeting',date:'2026-11-12',time:'2:00 PM',venue:'School Library / Online',organizer:'School Administration',audience:'Partner agencies and school leaders',status:'Upcoming',description:'Sample meeting to coordinate planned programs and partner support.'},
- {id:'ACT-003',title:'Community Learning Support Activity',date:'2026-11-20',time:'8:30 AM',venue:'School Grounds',organizer:'Community Partnership Team',audience:'Learners, families and partner organizations',status:'Planning',description:'Sample program entry. Replace with approved activity details.'}
- ],
- users:[
- {id:'USR-001',name:'System Administrator',email:'admin@enexus.local',role:'Administrator',agency:'School Administration',active:true},
- {id:'USR-002',name:'School Personnel Demo',email:'staff@enexus.local',role:'School Personnel',agency:'School',active:true},
- {id:'USR-003',name:'Partner Agency Demo',email:'partner@enexus.local',role:'Partner Agency',agency:'Partner Organization',active:true}
- ],
+ projects:[],
+ indicators:[],
+ docs:[],
+ activities:[],
+ users:[],
  chats:{},
  activity:[]
 };
@@ -138,20 +121,34 @@ try{db=JSON.parse(localStorage.getItem('enexusData'))||structuredClone(seed)}cat
 db.activities ||= JSON.parse(JSON.stringify(seed.activities));
 db.users ||= JSON.parse(JSON.stringify(seed.users));
 db.chats ||= {};
-// Remove only the original sample messages from older browser data.
-// Preserve real conversations and any messages users have added.
-const enexusDemoMessages = new Set([
+// One-time cleanup of legacy sample content stored by older website versions.
+// Do not erase genuine records or messages from real registered users.
+const enexusLegacySeedIds = {
+ projects: new Set(['PRJ-001','PRJ-002']),
+ indicators: new Set(['IND-001','IND-002']),
+ docs: new Set(['DOC-2026-001','DOC-2026-002']),
+ activities: new Set(['ACT-001','ACT-002','ACT-003']),
+ users: new Set(['USR-001','USR-002','USR-003'])
+};
+for(const [kind, ids] of Object.entries(enexusLegacySeedIds)) {
+ if(Array.isArray(db[kind])) db[kind]=db[kind].filter(item=>!ids.has(String(item?.id||'')));
+}
+const enexusSampleTexts=new Set([
  'Welcome to the Project e-NEXUS coordination space. Please use this sample chat to test partner communication.',
  'We can coordinate upcoming activities and program support here.',
  'Please share project updates and action items in the appropriate channel.'
 ]);
-for (const [channel, messages] of Object.entries(db.chats)) {
- if (!Array.isArray(messages)) { delete db.chats[channel]; continue; }
- const retained = messages.filter(m => !(m && m.time === 'Sample message' && enexusDemoMessages.has(m.text)));
- if (retained.length) db.chats[channel] = retained;
- else if (['School Coordination','Partner Agencies','Project Team'].includes(channel)) delete db.chats[channel];
- else db.chats[channel] = retained;
+for(const [channel, messages] of Object.entries(db.chats)) {
+ if(!Array.isArray(messages)) {delete db.chats[channel];continue;}
+ const kept=messages.filter(m=>m &&
+   !/^(school personnel demo|partner agency demo)$/i.test(String(m.sender||'').trim()) &&
+   !(m.time==='Sample message' && enexusSampleTexts.has(m.text)));
+ if(kept.length) db.chats[channel]=kept;
+ else delete db.chats[channel];
 }
+// Persist cleanup so removed demonstration content does not return on refresh.
+try{localStorage.setItem('enexusData',JSON.stringify(db));}catch(e){console.warn('Could not persist legacy sample cleanup',e);}
+
 let currentUser=null, currentChat=Object.keys(db.chats)[0]||'';
 let page='login', query='', filter='All';
 function save(){const local={...db,projects:db.projects.filter(x=>!String(x.id).startsWith('CLOUD-')),docs:db.docs.filter(x=>!String(x.id).startsWith('LINK-')),indicators:db.indicators.filter(x=>!String(x.id).startsWith('LINK-'))};localStorage.setItem('enexusData',JSON.stringify(local))}
