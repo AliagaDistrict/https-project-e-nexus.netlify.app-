@@ -549,6 +549,79 @@ projectsPage=function(){return enexusOriginalProjectsPage()+enexusFilePanel();};
 const enexusOriginalRender=render;
 render=function(){enexusOriginalRender();if(page==='projects'&&currentUser)enexusMountFiles();};
 
+
+// District File Management — Supabase-backed, RLS-enforced.
+let districtFileSchool='ALL',districtFileCategory='ALL',districtFileSearch='',districtFileRequest=0;
+function districtFilesPanel(){
+ const admin=isSystemAdmin();
+ const school=admin?districtFileSchool:(currentUser?.school_name||'');
+ const schoolOptions=admin?`<option value="ALL">All 23 Schools</option>${ENEXUS_SCHOOLS.map(n=>`<option value="${esc(n)}" ${school===n?'selected':''}>${esc(n)}</option>`).join('')}`:`<option value="${esc(school)}">${esc(school)}</option>`;
+ const projects=enexusFileProjects().filter(p=>admin&&(school==='ALL'||p.school_name===school)||!admin&&p.school_name===school);
+ return `<section class="panel" id="districtFileManager" style="margin-top:22px"><div class="panelhead"><div><h3>District File Management</h3><p>Secure project files and attachments from Supabase. Access is enforced by database policies.</p></div><button class="secondary" type="button" id="districtFileRefresh">Refresh</button></div>
+ <div class="formgrid" style="margin-bottom:16px"><div class="formgroup"><label for="districtFileSchool">School</label><select id="districtFileSchool" ${admin?'':'disabled'}>${schoolOptions}</select></div><div class="formgroup"><label for="districtFileCategory">File category</label><select id="districtFileCategory"><option value="ALL">All categories</option>${['Accomplishment Report','Certificate of Completion','Program of Work','Receipt','Other'].map(x=>`<option ${districtFileCategory===x?'selected':''}>${x}</option>`).join('')}</select></div><div class="formgroup full"><label for="districtFileSearch">Search file name, school or project</label><input id="districtFileSearch" placeholder="Search attachments…" value="${esc(districtFileSearch)}"></div></div>
+ <div id="districtFileResults" aria-live="polite">Loading files…</div>
+ ${enexusFileCanManage()?`<form id="districtFileUpload" class="panel" style="margin-top:18px;background:#f8fafc"><h4 style="margin:0 0 12px">Upload project attachment</h4><div class="formgrid"><div class="formgroup"><label for="districtUploadProject">Linked project (required)</label><select id="districtUploadProject" required><option value="">Choose a project</option>${projects.map(p=>`<option value="${esc(p.id)}">${esc(p.school_name)} — ${esc(p.name)}</option>`).join('')}</select></div><div class="formgroup"><label for="districtUploadCategory">Category</label><select id="districtUploadCategory"><option>Accomplishment Report</option><option>Certificate of Completion</option><option>Program of Work</option><option>Receipt</option><option>Other</option></select></div><div class="formgroup full"><label for="districtUploadInput">PDF, JPG or PNG (20 MB maximum)</label><input id="districtUploadInput" type="file" accept=".pdf,.jpg,.jpeg,.png" required></div></div><div class="formactions"><button id="districtUploadButton" type="submit" ${projects.length?'':'disabled'}>Upload attachment</button></div><p class="sectiondesc" style="margin:6px 0 0">Uploads require a linked Supabase project and permission to manage that school. Do not upload confidential records before a full access review.</p></form>`:''}</section>`;
+}
+const districtOriginalRecordsPage=recordsPage;
+recordsPage=function(){return districtOriginalRecordsPage()+districtFilesPanel();};
+const districtOriginalIctRecordsPage=ictRecordsPage;
+ictRecordsPage=function(){return districtOriginalIctRecordsPage()+districtFilesPanel();};
+function districtMountFiles(){
+ const host=document.getElementById('districtFileManager');if(!host)return;
+ const school=document.getElementById('districtFileSchool');school.onchange=()=>{districtFileSchool=school.value;render();};
+ document.getElementById('districtFileCategory').onchange=e=>{districtFileCategory=e.target.value;districtLoadFiles();};
+ document.getElementById('districtFileSearch').oninput=e=>{districtFileSearch=e.target.value;districtLoadFiles();};
+ document.getElementById('districtFileRefresh').onclick=districtLoadFiles;
+ const form=document.getElementById('districtFileUpload');if(form)form.onsubmit=districtUploadFile;
+ districtLoadFiles();
+}
+async function districtLoadFiles(){
+ const host=document.getElementById('districtFileResults');if(!host)return;
+ const request=++districtFileRequest;
+ if(!authClient||!currentUser){host.textContent='Sign in to view files.';return;}
+ host.textContent='Loading district attachments…';
+ const admin=isSystemAdmin(),school=admin?districtFileSchool:currentUser.school_name;
+ let q=authClient.from('enexus_project_files').select('id,project_id,school_name,category,original_filename,storage_path,content_type,uploaded_at').is('deleted_at',null).order('uploaded_at',{ascending:false}).limit(1000);
+ if(school&&school!=='ALL')q=q.eq('school_name',school);
+ if(districtFileCategory!=='ALL')q=q.eq('category',districtFileCategory);
+ const {data,error}=await q;
+ if(request!==districtFileRequest||!document.getElementById('districtFileResults'))return;
+ if(error){host.textContent='Cannot load files: '+error.message;return;}
+ const term=districtFileSearch.trim().toLowerCase();
+ const rows=(data||[]).filter(f=>!term||[f.original_filename,f.school_name,f.category,enexusFileProjects().find(p=>p.id==='CLOUD-'+f.project_id)?.name||''].some(x=>String(x||'').toLowerCase().includes(term)));
+ if(!rows.length){host.innerHTML='<div class="empty">No registered attachments match these filters. Upload a file under a linked project to begin.</div>';return;}
+ host.innerHTML=`<p class="sectiondesc">Showing ${rows.length} file(s)${data.length===1000?' (first 1,000 records)':''}.</p><div class="tablewrap"><table><thead><tr><th>File</th><th>School</th><th>Project</th><th>Category</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>${rows.map(f=>`<tr><td><strong>${esc(f.original_filename)}</strong></td><td>${esc(f.school_name)}</td><td>${esc(enexusFileProjects().find(p=>p.id==='CLOUD-'+f.project_id)?.name||'Linked project')}</td><td>${esc(f.category)}</td><td>${esc(new Date(f.uploaded_at).toLocaleString())}</td><td><div class="actions"><button class="secondary" type="button" data-district-download="${esc(f.id)}">Download</button>${enexusFileCanManage()?`<button class="danger" type="button" data-district-delete="${esc(f.id)}">Move to Recycle Bin</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`;
+ host.querySelectorAll('[data-district-download]').forEach(b=>b.onclick=()=>enexusDownloadFile(rows.find(f=>f.id===b.dataset.districtDownload)));
+ host.querySelectorAll('[data-district-delete]').forEach(b=>b.onclick=()=>districtDeleteFile(rows.find(f=>f.id===b.dataset.districtDelete)));
+}
+async function districtDeleteFile(f){
+ if(!f||!enexusFileCanManage())return;
+ if(!confirm('Move "'+f.original_filename+'" to the Recycle Bin?'))return;
+ const reason=prompt('Reason for deletion (optional):','');if(reason===null)return;
+ const {error}=await authClient.rpc('enexus_delete_project_file',{target_file_id:f.id,reason:reason||null});
+ if(error)return alert('Delete failed: '+error.message);
+ toast('File moved to Recycle Bin.');districtLoadFiles();
+}
+async function districtUploadFile(e){
+ e.preventDefault();if(enexusFileBusy||!authClient||!currentUser)return;
+ const project=enexusFileProjects().find(p=>p.id===document.getElementById('districtUploadProject').value);
+ const file=document.getElementById('districtUploadInput')?.files?.[0];if(!project||!file)return alert('Select a linked project and file.');
+ const ext=file.name.split('.').pop().toLowerCase();
+ const valid=(file.type==='application/pdf'&&ext==='pdf')||(file.type==='image/jpeg'&&['jpg','jpeg'].includes(ext))||(file.type==='image/png'&&ext==='png');
+ if(!valid||!ENEXUS_FILE_TYPES.includes(file.type)||file.size<1||file.size>ENEXUS_FILE_MAX)return alert('Choose a PDF, JPG or PNG file of 20 MB or less.');
+ const button=document.getElementById('districtUploadButton');enexusFileBusy=true;button.disabled=true;button.textContent='Uploading…';
+ const path=project.school_name+'/'+project.id.slice(6)+'/'+crypto.randomUUID()+'.'+ext;
+ try{
+  const {error:uploadError}=await authClient.storage.from(ENEXUS_FILE_BUCKET).upload(path,file,{contentType:file.type,upsert:false});if(uploadError)throw uploadError;
+  const {error:metadataError}=await authClient.from('enexus_project_files').insert({project_id:project.id.slice(6),school_name:project.school_name,category:document.getElementById('districtUploadCategory').value,original_filename:file.name,storage_path:path,content_type:file.type,uploaded_by:currentUser.id});
+  if(metadataError)throw new Error('File uploaded to storage, but metadata registration failed: '+metadataError.message+'. Report this storage path to an administrator for reconciliation: '+path);
+  document.getElementById('districtUploadInput').value='';toast('Attachment uploaded successfully.');await districtLoadFiles();
+ }catch(err){console.error('District file upload',err);alert('Upload failed: '+(err.message||String(err)));}
+ finally{enexusFileBusy=false;if(document.getElementById('districtUploadButton')){button.disabled=false;button.textContent='Upload attachment';}}
+}
+const districtOriginalRender=render;
+render=function(){districtOriginalRender();if(page==='records'&&currentUser)districtMountFiles();};
+
 initAuth();
 </script>
 </body>
