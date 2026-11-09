@@ -29,6 +29,24 @@
 .panel{border-radius:14px}
 @media(max-width:950px){.app{grid-template-columns:1fr}.sidebar{height:auto;position:relative;overflow:visible}.sidebar .navrow{flex-direction:row!important;overflow:auto}.sidebarbottom{margin-top:4px;display:flex;align-items:center;justify-content:space-between;gap:12px}.sidebarbottom .sidebarfoot{display:block;padding:5px 10px}.sidebarlogout{width:auto;white-space:nowrap}.topbar{position:relative}}
 @media(max-width:560px){.sidebarbottom .sidebarfoot{display:none}.sidebarbottom{justify-content:flex-end}.content{padding:16px}}
+
+/* Larger, clearer sidebar navigation labels and symbols */
+@media (min-width:951px){
+  .app{grid-template-columns:305px minmax(0,1fr)}
+  .sidebar{padding:22px 15px 16px}
+}
+.sidebar .navbtn{font-size:15px;font-weight:750;min-height:53px;padding:13px 14px;gap:15px;line-height:1.35}
+.sidebar .navbtn span{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;min-width:30px;font-size:24px;line-height:1.1}
+.sidebar .navlabel{font-size:12px;font-weight:800;letter-spacing:1.5px;margin:13px 12px 5px}
+.sidebar .brand h1{font-size:20px}
+.sidebar .brand small{font-size:12px}
+.sidebar .brandmark{width:48px;height:48px;font-size:23px;flex-shrink:0}
+.sidebarlogout{font-size:16px;font-weight:750;min-height:54px;padding:13px 14px;gap:15px}
+.sidebarlogout span{font-size:26px;display:inline-flex;justify-content:center;width:30px}
+@media(max-width:950px){
+  .sidebar .navbtn{font-size:14px;min-height:48px;padding:11px 13px}
+  .sidebar .navbtn span{font-size:22px;flex-basis:28px;width:28px;min-width:28px}
+}
 </style>
 </head>
 <body>
