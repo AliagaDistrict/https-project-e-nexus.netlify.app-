@@ -351,8 +351,15 @@ async function loadUsersDirectory(){
  if(page!=='users')return;
  if(error){host.innerHTML=`<div class="notice">Could not load registered accounts. Check that the updated SQL setup was run and that the profiles table has an email column. Details: ${esc(error.message)}</div>`;return;}
  if(!users||!users.length){host.innerHTML='<div class="empty">No registered accounts found yet.</div>';return;}
+ // Email addresses for legacy Phase 4 registrations remain locked in auth.users.
+ // The RPC enforces district-administrator authorization on the database side.
+ const {data:emailRows,error:emailError}=await authClient.rpc('enexus_admin_user_emails');
+ if(page!=='users')return;
+ const emailById=new Map((emailRows||[]).map(row=>[row.user_id,row.email]));
+ users.forEach(u=>{u.email=emailById.get(u.id)||u.email||'';});
+ const emailNotice=emailError?`<div class="notice">Account emails could not be retrieved from Authentication. Some older profiles may have blank emails. Details: ${esc(emailError.message)}</div>`:'';
  const roles=['Administrator','School Administrator','Project Coordinator','School Personnel','Records Officer','Partner Agency'];
- host.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td><strong>${esc(u.full_name||'Name not provided')}</strong><span class="sub">${esc((u.id||'').slice(0,8))}…</span></td><td>${esc(u.email||'Email unavailable')}</td><td>${esc(u.agency||'—')}</td><td><select data-user-role="${esc(u.id)}">${roles.map(r=>`<option value="${esc(r)}" ${u.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${u.approved?'<span class="pill green">Approved / Active</span>':'<span class="pill amber">Pending approval</span>'}</td><td><div class="actions"><button data-save-user="${esc(u.id)}">Save role</button><button class="secondary" data-toggle-user="${esc(u.id)}" data-approved="${u.approved?'true':'false'}">${u.approved?'Revoke access':'Approve account'}</button><button type="button" class="secondary" data-reset-user="${esc(u.id)}">Reset password</button><button type="button" data-delete-user="${esc(u.id)}" style="background:#b42318;color:white;border-color:#b42318" ${u.id===currentUser.id?'disabled title="You cannot delete your own account"':''}>Delete User</button></div></td></tr>`).join('')}</tbody></table></div>`;
+ host.innerHTML=`${emailNotice}<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td><strong>${esc(u.full_name||'Name not provided')}</strong><span class="sub">${esc((u.id||'').slice(0,8))}…</span></td><td>${esc(u.email||'Email unavailable')}</td><td>${esc(u.agency||'—')}</td><td><select data-user-role="${esc(u.id)}">${roles.map(r=>`<option value="${esc(r)}" ${u.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${u.approved?'<span class="pill green">Approved / Active</span>':'<span class="pill amber">Pending approval</span>'}</td><td><div class="actions"><button data-save-user="${esc(u.id)}">Save role</button><button class="secondary" data-toggle-user="${esc(u.id)}" data-approved="${u.approved?'true':'false'}">${u.approved?'Revoke access':'Approve account'}</button><button type="button" class="secondary" data-reset-user="${esc(u.id)}">Reset password</button><button type="button" data-delete-user="${esc(u.id)}" style="background:#b42318;color:white;border-color:#b42318" ${u.id===currentUser.id?'disabled title="You cannot delete your own account"':''}>Delete User</button></div></td></tr>`).join('')}</tbody></table></div>`;
  host.querySelectorAll('[data-reset-user]').forEach(btn=>btn.onclick=async()=>{
    if(currentUser?.role!=='Administrator')return toast('Administrator access required.');
    const u=users.find(x=>x.id===btn.dataset.resetUser);
@@ -382,7 +389,22 @@ async function loadUsersDirectory(){
      if(!data?.success)throw new Error(data?.error||'Deletion was not confirmed by the server.');
      toast('User account permanently deleted.');
      await loadUsersDirectory();
-   }catch(err){toast('Could not delete user. Deploy the secure enexus-delete-user Edge Function first. '+(err.message||''));btn.disabled=false;btn.textContent='Delete User';}
+   }catch(err){
+     let detail=err?.message||'Unknown error';
+     const response=err?.context;
+     if(response instanceof Response){
+       try{
+         const body=await response.clone().text();
+         if(body){
+           let parsed;
+           try{parsed=JSON.parse(body);}catch(_){parsed=null;}
+           detail+=' (HTTP '+response.status+': '+(parsed?.error||parsed?.message||body.slice(0,250))+')';
+         }else detail+=' (HTTP '+response.status+')';
+       }catch(_){detail+=' (HTTP '+response.status+')';}
+     }
+     toast('Could not delete user: '+detail);
+     btn.disabled=false;btn.textContent='Delete User';
+   }
  });
 }
 function activityForm(id=null){let a=id?db.activities.find(x=>x.id===id):{};openModal(id?'Edit activity':'Add school activity / program',formWrap('activityForm',[field('Activity / program title *','title',a.title||''),field('Date','date',a.date||today(),'date'),field('Time','time',a.time||''),field('Venue / meeting link reference','venue',a.venue||''),field('Organizer','organizer',a.organizer||currentUser.name),field('Intended audience','audience',a.audience||'School community and partners'),field('Status','status',a.status||'Upcoming','text',['Planning','Upcoming','Completed','Cancelled']),field('Description / announcement','description',a.description||'','textarea',null,true)]));$('#activityForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.title.trim())return toast('Activity title is required.');if(id)Object.assign(a,x);else{x.id='ACT-'+uid();db.activities.push(x)}log((id?'Updated':'Added')+' activity: '+x.title);save();closeModal();render();toast('Activity saved.')}}
