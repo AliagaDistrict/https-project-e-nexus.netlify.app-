@@ -130,7 +130,9 @@ function showLogin(mode='login', message=''){
   <div id="authMessage" class="notice" style="${message?'':'display:none'}">${esc(message)}</div>
   <form id="authForm">
    ${isRegister?`<div class="formgroup"><label>Full name</label><input name="full_name" autocomplete="name" required maxlength="120"></div>
-   <div class="formgroup"><label>School / agency</label><input name="agency" autocomplete="organization" required maxlength="160"></div>`:''}
+   <div class="formgroup"><label for="registrationSchool">School (Aliaga District)</label><select id="registrationSchool" name="school_name" required disabled><option value="">Loading schools…</option></select></div>
+   <div class="formgroup"><label for="registrationType">Account type</label><select id="registrationType" name="account_type" required><option value="">Select account type</option><option value="School Personnel">School Personnel</option><option value="Parents/Guardian">Parents/Guardian</option><option value="Other Partners/Stakeholders">Other Partners/Stakeholders</option><option value="SPTA / Officers Only">SPTA / Officers Only</option></select></div>
+   <div class="formgroup"><label>School / agency / organization (optional)</label><input name="agency" autocomplete="organization" maxlength="160"></div>`:''}
    <div class="formgroup"><label>Email address</label><input name="email" type="email" autocomplete="email" required maxlength="254"></div>
    <div class="formgroup"><label>Password</label><input name="password" type="password" autocomplete="${isRegister?'new-password':'current-password'}" minlength="8" required></div>
    <button id="authSubmit" type="submit" style="width:100%;margin-top:5px">${isRegister?'Submit registration request':'Sign in'}</button>
@@ -147,7 +149,8 @@ function showLogin(mode='login', message=''){
    const data=Object.fromEntries(new FormData(e.target));const email=data.email.trim().toLowerCase();
    try{
     if(isRegister){
-      const {data:result,error}=await authClient.auth.signUp({email,password:data.password,options:{emailRedirectTo:'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/',data:{full_name:data.full_name.trim(),agency:data.agency.trim()}}});
+      if(!data.school_name || !data.account_type)throw new Error('Please select your school and account type.');
+      const {data:result,error}=await authClient.auth.signUp({email,password:data.password,options:{emailRedirectTo:'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/',data:{full_name:data.full_name.trim(),agency:(data.agency||'').trim(),school_name:data.school_name,account_type:data.account_type}}});
       if(error)throw error;
       if(result.session){await loadAuthenticatedUser(result.session.user);}
       else showLogin('login','Registration submitted. Check your email if confirmation is enabled. Your account must be approved by an administrator before access is granted.');
@@ -160,6 +163,25 @@ function showLogin(mode='login', message=''){
    finally{authBusy=false;const b=$('#authSubmit');if(b){b.disabled=false;b.textContent=isRegister?'Submit registration request':'Sign in';}}
  };
  if(message)authMessage(message);
+ if(isRegister)loadRegistrationSchools();
+}
+async function loadRegistrationSchools(){
+ const schoolSelect=document.getElementById('registrationSchool');
+ if(!schoolSelect)return;
+ if(!authClient){schoolSelect.innerHTML='<option value="">Supabase connection unavailable</option>';return;}
+ try{
+  const {data,error}=await authClient.from('enexus_schools').select('name').order('name',{ascending:true});
+  if(error)throw error;
+  if(!data?.length)throw new Error('No schools are available to select. Check the enexus_schools SELECT policy for anonymous visitors.');
+  if(document.getElementById('registrationSchool')!==schoolSelect)return;
+  schoolSelect.innerHTML='<option value="">Select your school</option>'+data.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+  schoolSelect.disabled=false;
+ }catch(err){
+  if(document.getElementById('registrationSchool')!==schoolSelect)return;
+  schoolSelect.innerHTML='<option value="">Unable to load schools</option>';
+  schoolSelect.disabled=true;
+  authMessage('School list could not be loaded: '+(err.message||'Please contact the administrator.'));
+ }
 }
 async function loadAuthenticatedUser(authUser){
  if(!authClient||!authUser){currentUser=null;showLogin();return;}
