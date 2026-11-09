@@ -347,7 +347,7 @@ function communityPage(){let names=Object.keys(db.chats);if(!db.chats[currentCha
 function usersPage(){if(currentUser.role!=='Administrator')return `<h3 class="sectiontitle">Users & Access</h3><div class="notice">Administrator access is required to manage registered accounts.</div>`;return `<h3 class="sectiontitle">Users & Access</h3><p class="sectiondesc">Real accounts registered through Supabase Authentication. Approve account requests through the audited Supabase approval procedure. Role changes require a separate authorized administrator workflow.</p><div id="realUsersDirectory"><p>Loading registered accounts from Supabase…</p></div>`}
 async function loadUsersDirectory(){
  const host=$('#realUsersDirectory');if(!host||!authClient||currentUser?.role!=='Administrator')return;
- const {data:users,error}=await authClient.from('profiles').select('id,email,full_name,agency,role,approved,created_at').order('created_at',{ascending:true});
+ const {data:users,error}=await authClient.from('profiles').select('id,email,full_name,agency,role,approved,account_status,access_revoked,created_at').order('created_at',{ascending:true});
  if(page!=='users')return;
  if(error){host.innerHTML=`<div class="notice">Could not load registered accounts. Check that the updated SQL setup was run and that the profiles table has an email column. Details: ${esc(error.message)}</div>`;return;}
  if(!users||!users.length){host.innerHTML='<div class="empty">No registered accounts found yet.</div>';return;}
@@ -359,7 +359,9 @@ async function loadUsersDirectory(){
  users.forEach(u=>{u.email=emailById.get(u.id)||u.email||'';});
  const emailNotice=emailError?`<div class="notice">Account emails could not be retrieved from Authentication. Some older profiles may have blank emails. Details: ${esc(emailError.message)}</div>`:'';
  const roles=['Administrator','School Administrator','Project Coordinator','School Personnel','Records Officer','Partner Agency'];
- host.innerHTML=`${emailNotice}<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td><strong>${esc(u.full_name||'Name not provided')}</strong><span class="sub">${esc((u.id||'').slice(0,8))}…</span></td><td>${esc(u.email||'Email unavailable')}</td><td>${esc(u.agency||'—')}</td><td><select data-user-role="${esc(u.id)}">${roles.map(r=>`<option value="${esc(r)}" ${u.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${u.approved?'<span class="pill green">Approved / Active</span>':'<span class="pill amber">Pending approval</span>'}</td><td><div class="actions"><button data-save-user="${esc(u.id)}">Save role</button><button class="secondary" data-toggle-user="${esc(u.id)}" data-approved="${u.approved?'true':'false'}">${u.approved?'Revoke access':'Approve account'}</button><button type="button" class="secondary" data-reset-user="${esc(u.id)}">Reset password</button><button type="button" data-delete-user="${esc(u.id)}" style="background:#b42318;color:white;border-color:#b42318" ${u.id===currentUser.id?'disabled title="You cannot delete your own account"':''}>Delete User</button></div></td></tr>`).join('')}</tbody></table></div>`;
+ const {data:districtAdminAllowed,error:districtAdminError}=await authClient.rpc('enexus_is_district_admin');
+ const canManageAccess=!districtAdminError&&districtAdminAllowed===true;
+ host.innerHTML=`${emailNotice}<div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Organization</th><th>Role</th><th>Account status</th><th>Actions</th></tr></thead><tbody>${users.map(u=>`<tr><td><strong>${esc(u.full_name||'Name not provided')}</strong><span class="sub">${esc((u.id||'').slice(0,8))}…</span></td><td>${esc(u.email||'Email unavailable')}</td><td>${esc(u.agency||'—')}</td><td><select data-user-role="${esc(u.id)}">${roles.map(r=>`<option value="${esc(r)}" ${u.role===r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${u.access_revoked===true?'<span class="pill red">Access revoked</span>':u.approved?'<span class="pill green">Approved / Active</span>':'<span class="pill amber">Pending approval</span>'}</td><td><div class="actions"><button data-save-user="${esc(u.id)}">Save role</button><button class="secondary" data-toggle-user="${esc(u.id)}" data-approved="${u.approved?'true':'false'}" data-revoked="${u.access_revoked===true?'true':'false'}" ${u.role==='Administrator'||u.id===currentUser.id?'disabled title="Administrator account protected"':u.approved&&!canManageAccess?'disabled title="District Administrator authorization required"':''}>${u.role==='Administrator'||u.id===currentUser.id?'Protected Administrator':!u.approved?'Approve account':u.access_revoked===true?'Restore access':'Revoke access'}</button><button type="button" class="secondary" data-reset-user="${esc(u.id)}">Reset password</button><button type="button" data-delete-user="${esc(u.id)}" style="background:#b42318;color:white;border-color:#b42318" ${u.role==='Administrator'||u.id===currentUser.id?'disabled title="Administrator accounts are protected from deletion"':''}>${u.role==='Administrator'||u.id===currentUser.id?'Protected Administrator':'Delete User'}</button></div></td></tr>`).join('')}</tbody></table></div>`;
  host.querySelectorAll('[data-reset-user]').forEach(btn=>btn.onclick=async()=>{
    if(currentUser?.role!=='Administrator')return toast('Administrator access required.');
    const u=users.find(x=>x.id===btn.dataset.resetUser);
@@ -372,7 +374,51 @@ async function loadUsersDirectory(){
    toast('Password reset requested. Ask the account holder to check their email.');
  });
  host.querySelectorAll('[data-save-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.saveUser;const select=host.querySelector(`[data-user-role="${id}"]`);const role=select?.value;if(!role)return;btn.disabled=true;btn.disabled=false;toast('Role changes are locked for security. Use an authorized administrator role-assignment workflow.');loadUsersDirectory();});
- host.querySelectorAll('[data-toggle-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.toggleUser;const approved=btn.dataset.approved!=='true';if(id===currentUser.id&&!approved){toast('You cannot revoke your own access here.');return;}btn.disabled=true;if(!approved){btn.disabled=false;toast('Revoking access requires a separate authorized administrator workflow.');return;}const {error}=await authClient.rpc('enexus_approve_account',{target_user_id:id});btn.disabled=false;if(error){toast('Approval failed: '+error.message+(error.code==='23505'?' (Coordinator position already occupied at this school.)':''));return;}toast('Account approved.');loadUsersDirectory();});
+ host.querySelectorAll('[data-toggle-user]').forEach(btn=>btn.onclick=async()=>{
+   const id=btn.dataset.toggleUser;
+   const user=users.find(u=>u.id===id);
+   if(!user)return;
+   if(!user.approved){
+     btn.disabled=true;
+     const {error}=await authClient.rpc('enexus_approve_account',{target_user_id:id});
+     btn.disabled=false;
+     if(error){toast('Approval failed: '+error.message);return;}
+     toast('Account approved.');await loadUsersDirectory();return;
+   }
+   if(!canManageAccess){toast('District Administrator authorization required.');return;}
+   if(id===currentUser.id||user.role==='Administrator'){
+     toast('Administrator accounts cannot be revoked or restored.');return;
+   }
+   const action=user.access_revoked===true?'restore':'revoke';
+   const label=user.email||user.full_name||id;
+   const question=action==='revoke'
+     ?'Revoke login and database access for '+label+'? This may interrupt their work.'
+     :'Restore login and database access for '+label+'?';
+   if(!window.confirm(question))return;
+   btn.disabled=true;
+   btn.textContent=action==='revoke'?'Revoking…':'Restoring…';
+   try{
+     const {data,error}=await authClient.functions.invoke('enexus-manage-user-access',{
+       body:{target_user_id:id,action}
+     });
+     if(error){
+       let detail=error.message||'Request failed';
+       const response=error.context;
+       if(response instanceof Response){
+         try{const body=await response.clone().json();detail=body?.error||detail;
+           if(body?.manual_review_required)detail+=' — manual administrator review required';
+         }catch(_){}
+       }
+       throw new Error(detail);
+     }
+     if(!data?.success)throw new Error(data?.error||'Server did not confirm the change.');
+     toast(action==='revoke'?'Access revoked successfully.':'Access restored successfully.');
+   }catch(err){
+     toast('Access change failed: '+(err?.message||'Unknown error')+'; check Supabase before retrying.');
+   }finally{
+     await loadUsersDirectory();
+   }
+ });
  async function confirmEnexusUserDeletion(label){
    // A single Delete/Cancel dialog, with no typed confirmation.
    if(typeof HTMLDialogElement==='undefined'){
@@ -400,9 +446,11 @@ async function loadUsersDirectory(){
  }
  host.querySelectorAll('[data-delete-user]').forEach(btn=>btn.onclick=async()=>{
    const id=btn.dataset.deleteUser;
+   if(currentUser?.role!=='Administrator'){toast('Administrator access required.');return;}
    if(id===currentUser.id){toast('You cannot delete your own administrator account.');return;}
    const user=users.find(u=>u.id===id);
    if(!user)return;
+   if(user.role==='Administrator'){toast('Administrator accounts are protected from deletion.');return;}
    const label=user.email||user.full_name||id;
    if(!await confirmEnexusUserDeletion(label))return;
    btn.disabled=true;btn.textContent='Deleting…';
