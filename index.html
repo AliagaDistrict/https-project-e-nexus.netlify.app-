@@ -143,7 +143,7 @@ function showLogin(mode='login', message=''){
  if(!overlay){overlay=document.createElement('div');overlay.id='authOverlay';overlay.className='loginoverlay';document.body.appendChild(overlay);}
  const isRegister=mode==='register';
  overlay.innerHTML=`<div class="loginbox">
-  <div class="loginbrand"><div class="brandmark">eN</div><div><strong>Project e-NEXUS</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Secure school and partner workspace</div></div></div>
+  <button type="button" id="authClose" class="closex" style="float:right" aria-label="Close registration">✕ Close</button><div class="loginbrand"><div class="brandmark">eN</div><div><strong>Project e-NEXUS</strong><div style="font-size:11px;color:var(--muted);margin-top:4px">Secure school and partner workspace</div></div></div>
   <h2>${isRegister?'Request an account':'Sign in'}</h2>
   <p>${isRegister?'Create an account request. An administrator must approve access before you can use the workspace.':'Sign in with your registered email and password.'}</p>
   <div id="authMessage" class="notice" style="${message?'':'display:none'}">${esc(message)}</div>
@@ -161,12 +161,25 @@ function showLogin(mode='login', message=''){
   <div class="demoaccount">Access is granted only after an administrator approves your account. Do not use this site for confidential records until the database and access policies are configured.</div>
  </div>`;
  $('#authSwitch').onclick=e=>{e.preventDefault();showLogin(isRegister?'login':'register')};
+ const closeAuth=document.getElementById('authClose');
+ if(closeAuth){closeAuth.style.display=isRegister?'':'none';closeAuth.onclick=()=>showLogin('login');}
+ if(isRegister){
+  const form=document.getElementById('authForm');
+  form.elements.account_type.addEventListener('change',updateRegistrationPositionOptions);
+  form.elements.position.addEventListener('change',updateRegistrationPositionOptions);
+  updateRegistrationPositionOptions();
+ }
  $('#authForm').onsubmit=async e=>{
    e.preventDefault();
    if(!authClient){authMessage('Authentication is not configured yet. Add your Supabase project URL and publishable key in the code.');return;}
    if(authBusy)return;
-   authBusy=true;const submit=$('#authSubmit');submit.disabled=true;submit.textContent='Please wait…';
    const data=Object.fromEntries(new FormData(e.target));const email=data.email.trim().toLowerCase();
+   let selectedPosition='';
+   if(isRegister){
+    selectedPosition=data.position==='Other'?(data.other_position||'').trim():(data.position||'').trim();
+    if(!data.account_type||!selectedPosition){authMessage('Select your account type and position before submitting.');return;}
+   }
+   authBusy=true;const submit=$('#authSubmit');submit.disabled=true;submit.textContent='Please wait…';
    try{
     if(isRegister){
       const {data:result,error}=await authClient.auth.signUp({email,password:data.password,options:{emailRedirectTo:'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/',data:{full_name:data.full_name.trim(),school_name:data.school_name,account_type:data.account_type,agency:selectedPosition,position_in_school:data.account_type==='School Personnel'?selectedPosition:null}}});
