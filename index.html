@@ -892,13 +892,14 @@ async function enexusLoadFiles(){
  const request=++enexusFileRequest;
  list.textContent='Loading attachments…';if(recycle)recycle.textContent='Loading Recycle Bin…';
  const projectId=project.id.slice(6);
- const {data,error}=await authClient.from('enexus_project_files').select('id,project_id,school_name,category,original_filename,storage_path,content_type,uploaded_at').eq('project_id',projectId).eq('school_name',project.school_name).is('deleted_at',null).order('uploaded_at',{ascending:false});
+ const {data,error}=await authClient.from('enexus_project_files').select('id,project_id,school_name,category,original_filename,storage_path,content_type,uploaded_at,uploaded_by').eq('project_id',projectId).eq('school_name',project.school_name).is('deleted_at',null).order('uploaded_at',{ascending:false});
  if(request!==enexusFileRequest||!document.querySelector('#enexusFileList'))return;
  if(error){list.textContent='Cannot load attachments: '+error.message;}
  else if(!data?.length){list.innerHTML='<div class="empty">No uploaded attachments for this project.</div>';}
  else{
- list.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Document</th><th>Category</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>${data.map(f=>`<tr><td><strong>${esc(f.original_filename)}</strong></td><td>${esc(f.category)}</td><td>${esc(new Date(f.uploaded_at).toLocaleString())}</td><td><div class="actions"><button class="secondary" type="button" data-enexus-download="${esc(f.id)}">Download</button>${enexusFileCanManage()?`<button class="danger" type="button" data-enexus-delete="${esc(f.id)}">Delete</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`;
+ list.innerHTML=`<div class="tablewrap"><table><thead><tr><th>Document</th><th>Category</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>${data.map(f=>`<tr><td><strong>${esc(f.original_filename)}</strong></td><td>${esc(f.category)}</td><td>${esc(new Date(f.uploaded_at).toLocaleString())}</td><td><div class="actions"><button class="secondary" type="button" data-enexus-download="${esc(f.id)}">Download</button>${(isSystemAdmin()||f.uploaded_by===currentUser.id||['Project Development Officer I','PDO I'].includes(String(currentUser?.position_in_school||'').trim()))?`<button class="secondary" type="button" data-enexus-replace="${esc(f.id)}">Replace</button><button class="danger" type="button" data-enexus-delete="${esc(f.id)}">Delete</button>`:''}</div></td></tr>`).join('')}</tbody></table></div>`;
  list.querySelectorAll('[data-enexus-download]').forEach(b=>b.onclick=()=>enexusDownloadFile(data.find(f=>f.id===b.dataset.enexusDownload)));
+ list.querySelectorAll('[data-enexus-replace]').forEach(b=>b.onclick=()=>enexusReplaceFile(data.find(f=>f.id===b.dataset.enexusReplace)));
  list.querySelectorAll('[data-enexus-delete]').forEach(b=>b.onclick=()=>enexusDeleteFile(data.find(f=>f.id===b.dataset.enexusDelete)));
  }
  if(recycle){
@@ -940,11 +941,34 @@ async function enexusDownloadFile(file){
  download(file.original_filename,data,file.content_type||'application/octet-stream');
 }
 async function enexusDeleteFile(file){
- if(!file||!enexusFileCanManage())return;
- const reason='Deleted using the Project e-NEXUS Delete button.';
- const {error}=await authClient.rpc('enexus_delete_project_file',{target_file_id:file.id,reason:reason||null});
- if(error)return alert('Delete failed: '+error.message);
- toast('File moved to Recycle Bin.');await enexusLoadFiles();
+ if(!file||!confirm('Move this incorrect attachment to the Recycle Bin? This action is recorded.'))return;
+ const {error}=await authClient.rpc('enexus_correct_project_attachment',{p_file_id:file.id,p_reason:'Incorrect attachment removed by authorized uploader or coordinator.'});
+ if(error)return alert('Delete failed: '+error.message+'\\nInstall the companion Supabase SQL first.');
+ toast('Incorrect attachment moved to Recycle Bin.');await enexusLoadFiles();
+}
+async function enexusReplaceFile(oldFile){
+ if(!oldFile)return;
+ const input=document.createElement('input');input.type='file';input.accept='.pdf,.jpg,.jpeg,.png';
+ input.onchange=async()=>{
+  const file=input.files?.[0];if(!file)return;
+  const project=enexusFileProjects().find(p=>p.id===enexusFileProject);
+  if(!project||oldFile.project_id!==project.id.slice(6))return alert('Project changed; refresh and try again.');
+  const ext=file.name.split('.').pop().toLowerCase();
+  const valid=(file.type==='application/pdf'&&ext==='pdf')||(file.type==='image/jpeg'&&['jpg','jpeg'].includes(ext))||(file.type==='image/png'&&ext==='png');
+  if(!valid||file.size<1||file.size>ENEXUS_FILE_MAX)return alert('Choose a PDF, JPG or PNG under 20 MB.');
+  if(!confirm('Upload '+file.name+' as the replacement? The old attachment will be moved to Recycle Bin after the new upload succeeds.'))return;
+  const path=project.school_name+'/'+oldFile.project_id+'/'+crypto.randomUUID()+'.'+ext;
+  try{
+   const uploaded=await authClient.storage.from(ENEXUS_FILE_BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+   if(uploaded.error)throw uploaded.error;
+   const saved=await authClient.from('enexus_project_files').insert({project_id:oldFile.project_id,school_name:oldFile.school_name,category:oldFile.category,original_filename:file.name,storage_path:path,content_type:file.type,uploaded_by:currentUser.id});
+   if(saved.error)throw Error('New file uploaded but registration failed: '+saved.error.message+'; orphan path: '+path);
+   const removed=await authClient.rpc('enexus_correct_project_attachment',{p_file_id:oldFile.id,p_reason:'Replaced incorrect attachment with '+file.name});
+   if(removed.error)throw Error('Replacement uploaded, but original was NOT removed: '+removed.error.message+'. Contact administrator to reconcile.');
+   toast('Corrected attachment uploaded; original moved to Recycle Bin.');await enexusLoadFiles();
+  }catch(err){alert('Replace failed: '+err.message);await enexusLoadFiles();}
+ };
+ input.click();
 }
 async function enexusRestoreFile(fileId){
  if(!enexusFileCanManage()||!confirm('Restore this file?'))return;
@@ -990,7 +1014,7 @@ async function districtLoadFiles(){
  if(!authClient||!currentUser){host.textContent='Sign in to view files.';return;}
  host.textContent='Loading district attachments…';
  const admin=isSystemAdmin(),school=admin?districtFileSchool:currentUser.school_name;
- let q=authClient.from('enexus_project_files').select('id,project_id,school_name,category,original_filename,storage_path,content_type,uploaded_at').is('deleted_at',null).order('uploaded_at',{ascending:false}).limit(1000);
+ let q=authClient.from('enexus_project_files').select('id,project_id,school_name,category,original_filename,storage_path,content_type,uploaded_at,uploaded_by').is('deleted_at',null).order('uploaded_at',{ascending:false}).limit(1000);
  if(school&&school!=='ALL')q=q.eq('school_name',school);
  if(districtFileCategory!=='ALL')q=q.eq('category',districtFileCategory);
  const {data,error}=await q;
@@ -1117,7 +1141,7 @@ async function enexusLoadSchoolDocs(){
   const upload=manage&&(!a||status==='Needs Revision');
   const submit=manage&&(!a||status==='Needs Revision');
   const review=!!a&&status==='Pending Approval'&&a.submitted_version_id&&a.submitted_by!==currentUser.id&&reviewerAccess.get(d.school_name)===true;
-  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">Upload ${a?'revision':'file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
+  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">${a?'Upload corrected version':'Upload / correct file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
  }).join(''):'<div class="empty">No school documents are available.</div>';
  list.querySelectorAll('[data-school-upload]').forEach(b=>b.onclick=()=>enexusShowSchoolUpload(b.dataset.schoolUpload));
  list.querySelectorAll('[data-school-submit]').forEach(b=>b.onclick=()=>enexusSubmitSchoolDoc(b.dataset.schoolSubmit));
@@ -1154,7 +1178,7 @@ async function enexusUploadSchoolDoc(e,id){
   if(uploadError)throw uploadError;
   const {data:version,error:registerError}=await authClient.rpc('enexus_register_school_document_version',{p_document_id:id,p_storage_path:path,p_original_filename:file.name,p_revision_remarks:f.elements.remarks.value||null});
   if(registerError)throw Error('File uploaded but version registration failed: '+registerError.message+'; storage path for administrator: '+path);
-  toast('Document version '+version+' uploaded. Submit it for approval when ready.');await enexusLoadSchoolDocs();
+  toast('Document version '+version+' uploaded. The latest version is used for submission; earlier versions remain in the audit trail.');await enexusLoadSchoolDocs();
  }catch(err){alert('Upload failed: '+err.message)}finally{enexusDocUploadBusy=false;button.disabled=false}
 }
 async function enexusShowSchoolVersions(id){
