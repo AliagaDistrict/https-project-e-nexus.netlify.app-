@@ -64,6 +64,15 @@
 .sidebar .navbtn.active .nav-icon-frame,.sidebar .navbtn:hover .nav-icon-frame{background:#e5b54b;color:#12345a;border-color:#f5d78d}
 .sidebarlogout .nav-icon-frame{color:#ffd0c8;background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.18)}
 .sidebar .navbtn{gap:13px}
+
+/* All create/edit/view forms open as embedded page sections, never floating overlays. */
+.enexus-inline-editor[hidden]{display:none!important}
+.enexus-inline-editor{position:relative;z-index:1;margin:22px 26px 0;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px #12345a0a;scroll-margin-top:90px}
+.enexus-inline-editor-inner{padding:22px 24px;max-width:1150px;margin:auto}
+.enexus-inline-editor-tools{display:flex;justify-content:flex-end;margin-bottom:8px}
+.enexus-inline-editor h3{font-size:20px;margin:0 0 18px;color:var(--navy)}
+.enexus-inline-editor .formgrid{margin-top:12px}
+@media(max-width:560px){.enexus-inline-editor{margin:14px 16px 0}.enexus-inline-editor-inner{padding:16px}}
 </style>
 </head>
 <body>
@@ -95,11 +104,11 @@
 </aside>
 <main class="main">
   <header class="topbar"><div><div class="eyebrow">Electronic Network for Excellence</div><h2 id="pageTitle">Dashboard</h2></div><div class="topright"><span id="userLabel" class="rolelabel">Project workspace</span><div class="avatar" id="userAvatar">eN</div></div></header>
-  <div class="content" id="content"></div>
+  <section class="enexus-inline-editor" id="modalback" hidden aria-label="Page form"><div class="enexus-inline-editor-inner"><div class="enexus-inline-editor-tools"><button type="button" class="secondary" onclick="closeModal()">Close form</button></div><div id="modalcontent"></div></div></section><div class="content" id="content"></div>
   <div class="footer">Project e-NEXUS • Projects & Programs • Monitoring & Evaluation • Document Tracing & Management</div>
 </main>
 </div>
-<div class="modalback" id="modalback"><div class="modal"><button class="closex" onclick="closeModal()">✕</button><div id="modalcontent"></div></div></div>
+
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -151,6 +160,17 @@ try{localStorage.setItem('enexusData',JSON.stringify(db));}catch(e){console.warn
 
 let currentUser=null, currentChat=Object.keys(db.chats)[0]||'';
 let page='login', query='', filter='All';
+// Remember the selected module for each signed-in user, without storing credentials.
+function enexusPageKey(userId){return 'enexus:last-page:'+userId;}
+function enexusRememberPage(){
+ if(!currentUser||!canViewPage(page))return;
+ try{sessionStorage.setItem(enexusPageKey(currentUser.id),page);}catch(e){}
+}
+function enexusRestorePage(){
+ let saved='';
+ try{saved=sessionStorage.getItem(enexusPageKey(currentUser.id))||'';}catch(e){}
+ return saved&&canViewPage(saved)?saved:(isSystemAdmin()?'dashboard':isICTCoordinator()?'monitoring':'projects');
+}
 function save(){const local={...db,projects:db.projects.filter(x=>!String(x.id).startsWith('CLOUD-')),docs:db.docs.filter(x=>!String(x.id).startsWith('LINK-')),indicators:db.indicators.filter(x=>!String(x.id).startsWith('LINK-'))};localStorage.setItem('enexusData',JSON.stringify(local))}
 function toast(s){let t=$('#toast');t.textContent=s;t.style.display='block';setTimeout(()=>t.style.display='none',2600)}
 function log(msg){db.activity.unshift({date:new Date().toLocaleString(),msg});db.activity=db.activity.slice(0,30);save()}
@@ -166,7 +186,7 @@ function canEditMonitoring(){return isSystemAdmin();}
 function canEditTracing(){return isSystemAdmin() || (currentUser?.role==='Program Coordinator') || (currentUser?.role==='ICT Coordinator Moderator') || (currentUser?.position_in_school==='Program Coordinator' && currentUser?.role==='School Personnel') || (currentUser?.position_in_school==='ICT Coordinator' && currentUser?.role==='School Personnel');}
 function requireModuleEdit(kind){if(kind==='monitoring'&&!canEditMonitoring()){toast('Only the District System Administrator can edit Monitoring & Evaluation.');return false;}if(kind==='documents'&&!canEditTracing()){toast('Only the Administrator, Program Coordinator, or ICT Coordinator can edit Document Tracing.');return false;}return true;}
 function schoolScopedRows(rows){if(!isICTCoordinator())return rows;return rows.filter(r=>r.school_name && r.school_name===currentUser.school_name);}
-function setPage(p){if(!currentUser){showLogin();return}if(!canViewPage(p)){toast('This section is not available for your account.');return}page=p;query='';document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render()}
+function setPage(p){closeModal();if(!currentUser){showLogin();return}if(!canViewPage(p)){toast('This section is not available for your account.');return}page=p;query='';enexusRememberPage();document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render()}
 document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 function render(){
  if(!currentUser){showLogin();return}
@@ -174,7 +194,8 @@ function render(){
  $('#userAvatar').textContent=(currentUser.name||'eN').split(/\s+/).map(s=>s[0]).slice(0,2).join('').toUpperCase();
  document.querySelectorAll('.navbtn[data-page]').forEach(b=>{b.classList.toggle('hidden',!canViewPage(b.dataset.page));b.classList.toggle('active',b.dataset.page===page);});
  document.querySelectorAll('.navlabel').forEach(label=>{if(label.textContent.trim()==='ADMINISTRATION')label.classList.toggle('hidden',!isSystemAdmin());});
- if(!canViewPage(page))page='projects';
+ if(!canViewPage(page))page=isSystemAdmin()?'dashboard':isICTCoordinator()?'monitoring':'projects';
+ enexusRememberPage();
  let titles={dashboard:'Dashboard',projects:'Projects & Programs',monitoring:'Monitoring & Evaluation',reports:'Reports',documents:'Document Tracing',records:'Records & Retrieval',settings:'Settings & Data',activities:'Activities & Calendar',community:'Partner Chat',users:'Users & Access',announcements:'Announcements',orgchart:'Organizational Chart',updates:'Project Status Updates',transparency:'Transparency Register'};
  $('#pageTitle').textContent=titles[page]||'Projects & Programs';
  let f={dashboard:dashboardPage,projects:projectsPage,monitoring:monitorPage,reports:reportsPage,documents:documentsPage,records:recordsPage,settings:settingsPage,activities:activitiesPage,community:communityPage,users:usersPage,announcements:announcementsPage,orgchart:orgchartPage,updates:updatesPage,transparency:transparencyPage};
@@ -303,6 +324,9 @@ function showLogin(mode='login', message=''){
 }
 async function loadAuthenticatedUser(authUser){
  if(!authClient||!authUser){currentUser=null;showLogin();return;}
+ // Supabase can emit SIGNED_IN again when a browser tab regains focus.
+ // Do not reset the active module or discard its unsaved form state.
+ if(currentUser?.id===authUser.id && !document.getElementById('authOverlay'))return;
  const {data:profile,error}=await authClient.from('profiles').select('full_name,agency,role,approved,school_name,account_status,position_in_school').eq('id',authUser.id).maybeSingle();
  if(error){currentUser=null;showLogin('login','Could not verify your access profile. Ask the administrator to check the Supabase profiles table and Row Level Security settings.');return;}
  if(!profile||!profile.approved||profile.account_status!=='Approved'){
@@ -313,7 +337,7 @@ async function loadAuthenticatedUser(authUser){
  }
  currentUser={id:authUser.id,email:authUser.email,name:profile.full_name||authUser.email,role:profile.role||'Partner Agency',agency:profile.agency||'',school_name:profile.school_name||'',position_in_school:profile.position_in_school||''};
  if(document.getElementById('authOverlay'))document.getElementById('authOverlay').remove();
- page=isSystemAdmin()?'dashboard':isICTCoordinator()?'monitoring':'projects';render();
+ page=enexusRestorePage();render();
 }
 function showPasswordRecovery(){
  let overlay=document.getElementById('authOverlay');
@@ -341,7 +365,7 @@ async function initAuth(){
    });
  }catch(err){currentUser=null;showLogin('login','Supabase setup failed: '+(err.message||'check your project URL and publishable key.'));}
 }
-async function logout(){currentUser=null;page='login';if(authClient)await authClient.auth.signOut();showLogin('login','You have signed out.');}
+async function logout(){if(currentUser){try{sessionStorage.removeItem(enexusPageKey(currentUser.id));}catch(e){}}currentUser=null;page='login';if(authClient)await authClient.auth.signOut();showLogin('login','You have signed out.');}
 function activitiesPage(){let items=[...db.activities].sort((a,b)=>(a.date||'').localeCompare(b.date||''));return `<h3 class="sectiontitle">School Activities & Programs</h3><p class="sectiondesc">A shared calendar for upcoming school activities, project milestones, meetings, and partner-agency programs.</p><div class="toolbar"><input id="search" placeholder="Search activities, venues or organizers…" value="${esc(query)}"><select id="statusFilter"><option>All</option>${['Upcoming','Planning','Completed','Cancelled'].map(x=>`<option ${filter===x?'selected':''}>${x}</option>`).join('')}</select>${currentUser.role==='Administrator'?'<button data-action="add-activity">+ Add activity</button>':''}<button class="secondary" data-action="export-activities">Export CSV</button></div><div class="panel"><div class="panelhead"><div><h3>Calendar and announcements</h3><p>Confirm dates and details with the activity organizer.</p></div><span class="pill">${items.length} activities</span></div>${items.filter(a=>(filter==='All'||a.status===filter)&&JSON.stringify(a).toLowerCase().includes(query.toLowerCase())).map(a=>{let d=new Date((a.date||today())+'T12:00:00');return `<div class="eventcard"><div class="datebox"><b>${isNaN(d)?'—':d.getDate()}</b><small>${isNaN(d)?'Date':d.toLocaleString('en',{month:'short'})}</small></div><div class="eventbody"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><h4>${esc(a.title)}</h4>${statusPill(a.status)}</div><p>${esc(a.description||'No description provided.')}</p><div style="font-size:11px;color:var(--muted)">📅 ${esc(a.date)} • ${esc(a.time||'Time TBA')} &nbsp; · &nbsp; 📍 ${esc(a.venue||'Venue TBA')}<br>Organizer: ${esc(a.organizer||'Not assigned')} • Audience: ${esc(a.audience||'Not specified')}</div>${currentUser.role==='Administrator'?`<div class="actions" style="margin-top:9px"><button class="secondary" data-edit-activity="${a.id}">Edit</button><button class="danger" data-delete-activity="${a.id}">Delete</button></div>`:''}</div></div>`}).join('')||'<div class="empty">No activities match your search.</div>'}</div>`}
 function communityPage(){let names=Object.keys(db.chats);if(!db.chats[currentChat])currentChat=names[0]||'';let msgs=db.chats[currentChat]||[];return `<h3 class="sectiontitle">Partner Communication</h3><p class="sectiondesc">Conversation channels for coordinating activities, project updates, and inter-agency collaboration. Avoid sharing confidential information here.</p><div class="chatlayout"><div class="chatlist"><div style="font-size:10px;letter-spacing:1px;font-weight:800;color:var(--muted);padding:8px">CONVERSATIONS</div>${names.map(n=>`<button class="chatcontact ${n===currentChat?'active':''}" data-chat="${esc(n)}"><span class="contactavatar">${esc(n.slice(0,1))}</span><span class="contactmeta"><b>${esc(n)}</b><small>${(db.chats[n]||[]).length} messages</small></span></button>`).join('')}${currentUser.role==='Administrator'?'<button class="secondary" style="width:100%;margin-top:10px" data-action="add-chat">+ New channel</button>'+(currentChat?'<button class="danger" style="width:100%;margin-top:8px" data-action="delete-chat-channel">Delete Channel</button>':''):''}</div><div class="chatwindow"><div class="chathead">${esc(currentChat||'No conversations yet')} <span class="rolechip" style="float:right">${esc(currentUser.role)}</span></div><div class="chatmessages" id="chatmessages">${msgs.map((m,i)=>`<div class="bubble ${m.sender===currentUser.name?'mine':''}"><strong>${esc(m.sender)}</strong><div>${esc(m.text)}</div><small>${esc(m.time||'')}</small>${currentUser.role==='Administrator'||m.sender===currentUser.name?`<button type="button" class="danger" style="margin-top:7px;padding:4px 7px;font-size:10px" data-delete-chat-message="${i}">Delete</button>`:''}</div>`).join('')||'<div class="empty">No messages yet. Start the conversation.</div>'}</div><form class="chatcompose" id="chatForm"><input name="message" placeholder="Write a message…" required maxlength="1000"><button>Send</button></form></div></div>`}
 function usersPage(){if(currentUser.role!=='Administrator')return `<h3 class="sectiontitle">Users & Access</h3><div class="notice">Administrator access is required to manage registered accounts.</div>`;return `<h3 class="sectiontitle">Users & Access</h3><p class="sectiondesc">Real accounts registered through Supabase Authentication. Approve account requests through the audited Supabase approval procedure. Role changes require a separate authorized administrator workflow.</p><div id="realUsersDirectory"><p>Loading registered accounts from Supabase…</p></div>`}
@@ -482,11 +506,10 @@ function activityForm(id=null){let a=id?db.activities.find(x=>x.id===id):{};open
 function addChatForm(){openModal('Create conversation channel',formWrap('chatAddForm',[field('Channel name *','name',''),field('Purpose','purpose','Partner coordination'),field('Initial message','message','Welcome to this channel.','textarea',null,true)]));$('#chatAddForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));let n=x.name.trim();if(!n)return toast('Channel name is required.');if(db.chats[n])return toast('A channel with that name already exists.');db.chats[n]=[{sender:currentUser.name,text:x.message||'Channel created.',time:new Date().toLocaleString()}];currentChat=n;save();closeModal();render();toast('Channel created in this browser.')}}
 function addUserForm(){openModal('Add local user entry',formWrap('userForm',[field('Full name *','name',''),field('Email *','email',''),field('Organization / agency','agency',''),field('Role','role','School Personnel','text',['Administrator','School Administrator','Project Coordinator','School Personnel','Records Officer','Partner Agency'])]));$('#userForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim()||!x.email.trim())return toast('Name and email are required.');if(db.users.some(u=>u.email.toLowerCase()===x.email.toLowerCase()))return toast('That email is already listed.');db.users.push({id:'USR-'+uid(),...x,active:true});log('Added demo user: '+x.email);save();closeModal();render();toast('Local user entry added. No account or invitation was created.')}}
 
-function openModal(title,body){$('#modalcontent').innerHTML=`<h3>${title}</h3>${body}`;$('#modalback').style.display='flex'}
-function closeModal(){$('#modalback').style.display='none'}
+function openModal(title,body){const panel=$('#modalback');$('#modalcontent').innerHTML=`<h3>${title}</h3>${body}`;panel.hidden=false;panel.scrollIntoView({behavior:'smooth',block:'start'});} function closeModal(){const panel=$('#modalback');panel.hidden=true;$('#modalcontent').replaceChildren();}
 function field(label,name,value='',type='text',opts=null,full=false){let control=opts?`<select name="${name}">${opts.map(o=>`<option value="${esc(o)}" ${String(value)===String(o)?'selected':''}>${esc(o)}</option>`).join('')}</select>`:type==='textarea'?`<textarea name="${name}">${esc(value)}</textarea>`:`<input name="${name}" type="${type}" value="${esc(value)}" ${type==='number'?'min="0"':''}>`;return `<div class="formgroup ${full?'full':''}"><label>${label}</label>${control}</div>`}
 function formWrap(id,fields){return `<form id="${id}"><div class="formgrid">${fields.join('')}</div><div class="formactions"><button type="button" class="secondary" onclick="closeModal()">Cancel</button><button type="submit">Save record</button></div></form>`}
-function projectForm(id=null){let p=id?db.projects.find(x=>x.id===id):{};openModal(id?'Edit project':'Register a project',formWrap('projectForm',[field('Project name *','name',p.name||''),field('Project lead / owner','owner',p.owner||''),field('Start date','start',p.start||today(),'date'),field('Target end date','end',p.end||'','date'),field('Status','status',p.status||'Planned','text',['Planned','In Progress','On Hold','Completed','Cancelled']),field('Progress (%)','progress',p.progress??0,'number'),field('Budget / resource note','budget',p.budget||''),field('Objective','objective',p.objective||'','textarea',null,true),field('Notes','notes',p.notes||'','textarea',null,true)]));$('#projectForm').onsubmit=async e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim())return toast('Project name is required.');x.progress=Math.max(0,Math.min(100,Number(x.progress)||0));const payload={name:x.name,owner:x.owner,start:x.start||null,end:x.end||null,status:x.status,progress:x.progress,budget:x.budget,objective:x.objective,notes:x.notes};if(!authClient)return toast('Supabase connection required.');const result=id&&String(id).startsWith('CLOUD-')?await authClient.from('enexus_linked_projects').update(payload).eq('id',id.slice(6)):await authClient.from('enexus_linked_projects').insert({...payload,created_by:currentUser.id});if(result.error)return toast('Project not saved: '+result.error.message);closeModal();await loadSharedProjects(true);toast('Project saved and linked to Document Tracing and Monitoring & Evaluation.');}}
+function projectForm(id=null){let p=id?db.projects.find(x=>x.id===id):{};openModal(id?'Edit project':'Register a project',formWrap('projectForm',[field('Project name *','name',p.name||''),field('School *','school_name',p.school_name||currentUser?.school_name||'ALIAGA CENTRAL SCHOOL','text',ENEXUS_SCHOOLS),field('Project lead / owner','owner',p.owner||''),field('Start date','start',p.start||today(),'date'),field('Target end date','end',p.end||'','date'),field('Status','status',p.status||'Planned','text',['Planned','In Progress','On Hold','Completed','Cancelled']),field('Progress (%)','progress',p.progress??0,'number'),field('Budget / resource note','budget',p.budget||''),field('Objective','objective',p.objective||'','textarea',null,true),field('Notes','notes',p.notes||'','textarea',null,true)]));$('#projectForm').onsubmit=async e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim())return toast('Project name is required.');if(!x.school_name||!ENEXUS_SCHOOLS.includes(x.school_name))return toast('Please select a valid school.');x.progress=Math.max(0,Math.min(100,Number(x.progress)||0));const payload={name:x.name,school_name:(id&&String(id).startsWith('CLOUD-')?p.school_name:x.school_name),owner:x.owner,start:x.start||null,end:x.end||null,status:x.status,progress:x.progress,budget:x.budget,objective:x.objective,notes:x.notes};if(!authClient)return toast('Supabase connection required.');const result=id&&String(id).startsWith('CLOUD-')?await authClient.from('enexus_linked_projects').update(payload).eq('id',id.slice(6)):await authClient.from('enexus_linked_projects').insert({...payload,created_by:currentUser.id});if(result.error)return toast('Project not saved: '+result.error.message);closeModal();await loadSharedProjects(true);toast('Project saved and linked to Document Tracing and Monitoring & Evaluation.');}}
 function indicatorForm(id=null){if(!requireModuleEdit('monitoring'))return;if(id&&String(id).startsWith('LINK-'))return toast('This indicator is linked to a project and cannot be edited as a local indicator. Update the source project instead.');let i=id?db.indicators.find(x=>x.id===id):{};openModal(id?'Edit performance indicator':'Add performance indicator',formWrap('indicatorForm',[field('Indicator name *','name',i.name||''),field('Linked project','project',i.project||db.projects[0]?.id||'','text',db.projects.map(p=>p.id)),field('Target value','target',i.target??0,'number'),field('Actual value','actual',i.actual??0,'number'),field('Unit / measure','unit',i.unit||''),field('Last updated','date',i.date||today(),'date'),field('Evidence / notes','notes',i.notes||'','textarea',null,true)]));$('#indicatorForm').onsubmit=e=>{e.preventDefault();let x=Object.fromEntries(new FormData(e.target));if(!x.name.trim())return toast('Indicator name is required.');x.target=Number(x.target)||0;x.actual=Number(x.actual)||0;if(id){Object.assign(i,x);log('Updated indicator: '+x.name)}else{x.id='IND-'+uid();db.indicators.push(x);log('Added indicator: '+x.name)}save();closeModal();render();toast('Indicator saved.')}}
 function docForm(id=null){
  if(!requireModuleEdit('documents'))return;
