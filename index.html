@@ -409,15 +409,15 @@ async function loadAuthenticatedUser(authUser){
  // Supabase can emit SIGNED_IN again when a browser tab regains focus.
  // Do not reset the active module or discard its unsaved form state.
  if(currentUser?.id===authUser.id && !document.getElementById('authOverlay'))return;
- const {data:profile,error}=await authClient.from('profiles').select('full_name,agency,role,approved,school_name,account_status,position_in_school').eq('id',authUser.id).maybeSingle();
+ const {data:profile,error}=await authClient.from('profiles').select('full_name,agency,role,approved,school_name,account_status,position_in_school,access_revoked').eq('id',authUser.id).maybeSingle();
  if(error){currentUser=null;showLogin('login','Could not verify your access profile. Ask the administrator to check the Supabase profiles table and Row Level Security settings.');return;}
- if(!profile||!profile.approved||profile.account_status!=='Approved'){
+ if(!profile||!profile.approved||profile.account_status!=='Approved'||profile.access_revoked===true){
    currentUser=null;
    await authClient.auth.signOut();
    showLogin('login','Your account is registered but is awaiting administrator approval. You cannot access the workspace yet.');
    return;
  }
- currentUser={id:authUser.id,email:authUser.email,name:profile.full_name||authUser.email,role:profile.role||'Partner Agency',agency:profile.agency||'',school_name:profile.school_name||'',position_in_school:profile.position_in_school||''};
+ currentUser={id:authUser.id,email:authUser.email,name:profile.full_name||authUser.email,role:profile.role||'Partner Agency',agency:profile.agency||'',school_name:profile.school_name||'',position_in_school:profile.position_in_school||'',approved:profile.approved===true,account_status:profile.account_status||'',access_revoked:profile.access_revoked===true};
  if(document.getElementById('authOverlay'))document.getElementById('authOverlay').remove();
  page=enexusRestorePage();render();
 }
