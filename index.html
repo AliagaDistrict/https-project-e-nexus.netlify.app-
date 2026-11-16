@@ -198,11 +198,11 @@ const ENEXUS_ADMIN_ONLY_PAGES=new Set(['dashboard','activities','updates','trans
 const ENEXUS_ICT_PAGES=new Set(['monitoring','records']);
 function isSystemAdmin(){return currentUser?.role==='Administrator';}
 function isICTCoordinator(){return !!currentUser && !isSystemAdmin() && (currentUser.role==='ICT Coordinator Moderator'||(currentUser.role==='School Personnel'&&currentUser.position_in_school==='ICT Coordinator'));}
-function canViewPage(p){if(isSystemAdmin())return true;if(isICTCoordinator())return ENEXUS_ICT_PAGES.has(p);if(ENEXUS_ICT_PAGES.has(p))return false;if(ENEXUS_ADMIN_ONLY_PAGES.has(p))return false;return ['projects','documents','community','announcements','orgchart','reports'].includes(p);}
+function canViewPage(p){if(isSystemAdmin())return true;if(enexusIsAliagaAssistant()&&p==='records')return true;if(isICTCoordinator())return ENEXUS_ICT_PAGES.has(p);if(ENEXUS_ICT_PAGES.has(p))return false;if(ENEXUS_ADMIN_ONLY_PAGES.has(p))return false;return ['projects','documents','community','announcements','orgchart','reports'].includes(p);}
 function canEditMonitoring(){return isSystemAdmin();}
 function canEditTracing(){return isSystemAdmin() || (currentUser?.role==='Program Coordinator') || (currentUser?.role==='ICT Coordinator Moderator') || (currentUser?.position_in_school==='Program Coordinator' && currentUser?.role==='School Personnel') || (currentUser?.position_in_school==='ICT Coordinator' && currentUser?.role==='School Personnel');}
 function requireModuleEdit(kind){if(kind==='monitoring'&&!canEditMonitoring()){toast('Only the District System Administrator can edit Monitoring & Evaluation.');return false;}if(kind==='documents'&&!canEditTracing()){toast('Only the Administrator, Program Coordinator, or ICT Coordinator can edit Document Tracing.');return false;}return true;}
-function schoolScopedRows(rows){if(!isICTCoordinator())return rows;return rows.filter(r=>r.school_name && r.school_name===currentUser.school_name);}
+function schoolScopedRows(rows){if(!isICTCoordinator()&&!enexusIsAliagaAssistant())return rows;return rows.filter(r=>r.school_name && r.school_name===currentUser.school_name);}
 function setPage(p){closeModal();if(!currentUser){showLogin();return}if(!canViewPage(p)){toast('This section is not available for your account.');return}page=p;query='';enexusRememberPage();document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render()}
 document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 function render(){
@@ -216,7 +216,7 @@ function render(){
  let titles={dashboard:'Dashboard',projects:'Projects & Programs',monitoring:'Monitoring & Evaluation',reports:'Reports',documents:'Document Tracing',records:'Records & Retrieval',settings:'Settings & Data',activities:'Activities & Calendar',community:'Partner Chat',users:'Users & Access',announcements:'Announcements',orgchart:'Organizational Chart',updates:'Project Status Updates',transparency:'Transparency Register'};
  $('#pageTitle').textContent=titles[page]||'Projects & Programs';
  let f={dashboard:dashboardPage,projects:projectsPage,monitoring:monitorPage,reports:reportsPage,documents:documentsPage,records:recordsPage,settings:settingsPage,activities:activitiesPage,community:communityPage,users:usersPage,announcements:announcementsPage,orgchart:orgchartPage,updates:updatesPage,transparency:transparencyPage};
- $('#content').innerHTML=(page==='monitoring'&&isICTCoordinator())?ictMonitoringPage():(page==='records'&&isICTCoordinator())?ictRecordsPage():f[page]();
+ $('#content').innerHTML=(page==='monitoring'&&isICTCoordinator())?ictMonitoringPage():(page==='records'&&(isICTCoordinator()||enexusIsAliagaAssistant()))?ictRecordsPage():f[page]();
  wire();
  if(page==='users')loadUsersDirectory();
  if(['announcements','updates','transparency'].includes(page))loadCloudModule(page);
