@@ -1156,11 +1156,9 @@ async function enexusLoadSchoolDocs(){
 }
 async function enexusRemoveSchoolDoc(id){
  const d=enexusSchoolDocs.find(x=>x.id===id);if(!d)return;
- const reason=prompt('Reason for removing "'+d.title+'" from the active Transparency Register (required):');
- if(reason===null)return;
- if(reason.trim().length<5)return alert('Please enter a reason of at least 5 characters.');
+ const reason='Removed from active register by an authorized user.';
  if(!confirm('Remove "'+d.title+'" from the active register? Its uploaded files, versions and approval history will be RETAINED for audit.'))return;
- const {error}=await authClient.rpc('enexus_hide_school_document',{p_document_id:id,p_reason:reason.trim()});
+ const {error}=await authClient.rpc('enexus_hide_school_document',{p_document_id:id,p_reason:reason});
  if(error)return alert('Delete unavailable: '+error.message+'\nInstall the companion Supabase SQL first.');
  toast('Document removed from active register; audit history preserved.');await enexusLoadSchoolDocs();
 }
