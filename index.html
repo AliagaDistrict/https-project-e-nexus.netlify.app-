@@ -303,19 +303,37 @@ function enexusInstallPasswordEyes(){
 const enexusPasswordObserver=new MutationObserver(()=>enexusInstallPasswordEyes());
 if(document.body)enexusPasswordObserver.observe(document.body,{childList:true,subtree:true});
 
+const enexusResetCooldownMs=60000;
+const enexusResetLastSent=new Map();
+const enexusResetPending=new Set();
 async function enexusRequestPasswordReset(email,button,onStatus){
  if(!authClient){onStatus('Authentication is not ready. Please refresh and try again.');return;}
  const address=String(email||'').trim().toLowerCase();
  if(!address){onStatus('Please enter your registered email address.');return;}
+ if(enexusResetPending.has(address)){onStatus('A password reset request is already being processed.');return;}
+ const elapsed=Date.now()-(enexusResetLastSent.get(address)||0);
+ if(elapsed<enexusResetCooldownMs){onStatus('Please wait '+Math.ceil((enexusResetCooldownMs-elapsed)/1000)+' seconds before requesting another reset email.');return;}
+ enexusResetPending.add(address);
  if(button)button.disabled=true;
  try{
   const {error}=await authClient.auth.resetPasswordForEmail(address,{
    redirectTo:'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/'
   });
   if(error)throw error;
-  onStatus('If this email is registered, a password-reset link will be sent. Check your inbox and spam folder.');
- }catch(err){onStatus('Could not send the reset email: '+(err?.message||'Please try again.'));}
- finally{if(button)button.disabled=false;}
+  enexusResetLastSent.set(address,Date.now());
+  onStatus('If this email is registered, a password-reset link will be sent. Check your inbox and spam folder. Please do not request multiple emails.');
+ }catch(err){
+  const raw=String(err?.message||'');
+  if(err?.status===429||/rate limit|too many requests|over_email_send_rate_limit/i.test(raw)){
+   enexusResetLastSent.set(address,Date.now());
+   onStatus('Supabase email sending limit reached. No new reset email can be sent right now. Wait for the limit to reset, or ask the system administrator to configure SMTP in Supabase Authentication. Repeated clicks will not resolve this.');
+  }else{
+   onStatus('Could not send the reset email: '+(raw||'Please try again.'));
+  }
+ }finally{
+  enexusResetPending.delete(address);
+  if(button)button.disabled=false;
+ }
 }
 function showLogin(mode='login', message=''){
  document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.remove('active'));
@@ -376,7 +394,12 @@ function showLogin(mode='login', message=''){
       if(error)throw error;
       await loadAuthenticatedUser(result.user);
     }
-   }catch(err){authMessage(err.message||'Authentication failed. Please try again.');}
+   }catch(err){
+     const raw=String(err?.message||'');
+     if(err?.status===429||/email rate limit|over_email_send_rate_limit|too many requests/i.test(raw)){
+       authMessage('Supabase has temporarily reached its email sending limit. Your registration may not have completed. Please do not keep retrying; ask the system administrator to verify the custom SMTP configuration and Authentication rate limits, then try again.');
+     }else authMessage(raw||'Authentication failed. Please try again.');
+   }
    finally{authBusy=false;const b=$('#authSubmit');if(b){b.disabled=false;b.textContent=isRegister?'Submit registration request':'Sign in';}}
  };
  if(message)authMessage(message);
