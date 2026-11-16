@@ -198,7 +198,7 @@ const ENEXUS_ADMIN_ONLY_PAGES=new Set(['dashboard','activities','updates','trans
 const ENEXUS_ICT_PAGES=new Set(['monitoring','records']);
 function isSystemAdmin(){return currentUser?.role==='Administrator';}
 function isICTCoordinator(){return !!currentUser && !isSystemAdmin() && (currentUser.role==='ICT Coordinator Moderator'||(currentUser.role==='School Personnel'&&currentUser.position_in_school==='ICT Coordinator'));}
-function canViewPage(p){if(isSystemAdmin())return true;if(enexusCanAccessSchoolRecords()&&p==='records')return true;if(isICTCoordinator())return ENEXUS_ICT_PAGES.has(p);if(ENEXUS_ICT_PAGES.has(p))return false;if(ENEXUS_ADMIN_ONLY_PAGES.has(p))return false;return ['projects','documents','community','announcements','orgchart','reports'].includes(p);}
+function canViewPage(p){if(isSystemAdmin())return true;if(enexusCanAccessSchoolRecords()&&p==='records')return true;if(isICTCoordinator())return ENEXUS_ICT_PAGES.has(p);if(p==='transparency')return !!currentUser && currentUser.role==='School Personnel' && currentUser.approved===true && currentUser.account_status==='Approved' && currentUser.access_revoked!==true && !!currentUser.school_name;if(ENEXUS_ICT_PAGES.has(p))return false;if(ENEXUS_ADMIN_ONLY_PAGES.has(p))return false;return ['projects','documents','community','announcements','orgchart','reports'].includes(p);}
 function enexusIsApprovedAOII(){return !!currentUser && currentUser.role==='School Personnel' && currentUser.approved===true && currentUser.access_revoked!==true && currentUser.account_status==='Approved' && /^(administrative officer ii|ao ii)$/i.test(String(currentUser.position_in_school||'').trim()) && ENEXUS_SCHOOLS.includes(currentUser.school_name);}
 function enexusCanCreateProject(){return ['Administrator','School Administrator','Project Coordinator'].includes(currentUser?.role)||enexusIsApprovedAOII();}
 function canEditMonitoring(){return isSystemAdmin();}
@@ -1078,6 +1078,130 @@ async function tracingDelete(id){
 
 function tracingRoute(id){if(!isSystemAdmin())return toast('District Administrator required.');let d=tracingRows.find(x=>x.id===id);if(!d)return;let next=tracingNext(d.current_status);if(!next)return toast('Document has reached the final milestone.');openModal('Route document',`<div class="notice">${esc(d.tracking_number)} — ${esc(d.document_title)}<p><strong>${esc(d.current_status)}</strong> → <strong>${esc(next)}</strong></p></div><form id="tracingRouteForm"><div class="formgrid"><div class="formgroup"><label>Action date *</label><input type="date" name="date" value="${today()}" max="${today()}" required></div><div class="formgroup"><label>From office</label><input name="from" value="${esc(d.receiving_office||'')}"></div><div class="formgroup"><label>To office</label><input name="to" value="${esc(next==='Submitted to Division'?'Division Office':next==='Received by District'?'District Office':d.receiving_office||'')}"></div><div class="formgroup full"><label>Remarks</label><textarea name="remarks"></textarea></div></div><div class="formactions"><button type="button" class="secondary" id="tracingCancel">Cancel</button><button type="submit">Save routing action</button></div></form>`);document.getElementById('tracingCancel').onclick=closeModal;let f=document.getElementById('tracingRouteForm');f.onsubmit=async e=>{e.preventDefault();if(!isSystemAdmin())return;let v=f.elements,btn=f.querySelector('[type="submit"]');if(v.date.value>today())return alert('Action date cannot be in the future.');if(!confirm('Record this official document routing action?'))return;btn.disabled=true;try{const {error}=await authClient.rpc('enexus_route_document',{p_document_id:id,p_new_status:next,p_action_date:v.date.value,p_from_office:v.from.value.trim()||null,p_to_office:v.to.value.trim()||null,p_remarks:v.remarks.value.trim()||null});if(error)throw error;closeModal();toast('Routing recorded.');await tracingLoad();}catch(err){alert('Routing failed: '+(err.message||String(err)));}finally{btn.disabled=false}};}
 async function tracingShowHistory(id){let d=tracingRows.find(x=>x.id===id);if(!d)return;openModal('Document audit history',`<p><strong>${esc(d.tracking_number)}</strong> — ${esc(d.document_title)}</p><div id="tracingHistoryBody">Loading audit history…</div>`);let {data,error}=await authClient.from('enexus_tracing_history').select('*').eq('document_id',id).order('performed_at',{ascending:true}).limit(500);let el=document.getElementById('tracingHistoryBody');if(!el)return;if(error){el.textContent='Unable to load history: '+error.message;return;}el.innerHTML=(data||[]).map(h=>`<div class="timelineitem"><span class="dot"></span><div><strong>${esc(h.action||'Action')} — ${esc(h.new_status||'—')}</strong><p>${esc(h.previous_status||'—')} → ${esc(h.new_status||'—')} • ${esc(h.performed_at?new Date(h.performed_at).toLocaleString():'—')}</p><p>${esc(h.from_office||'—')} → ${esc(h.to_office||'—')}</p><p>${esc(h.remarks||'')}</p></div></div>`).join('')||'<p>No history entries available.</p>';}
+
+/* School Document Submission — isolated from project attachments and tracing. */
+const enexusSchoolDocsBucket='enexus-school-documents';
+let enexusSchoolDocs=[],enexusSchoolApprovals=new Map(),enexusDocUploadBusy=false;
+function enexusSchoolDocsPage(){
+ return `<h3 class="sectiontitle">School Document Submission &amp; Approval</h3><p class="sectiondesc">Private, school-scoped document files. Create a document record, upload a version, then submit it for review. Project attachments are managed separately in Records &amp; Retrieval.</p>
+ <div class="panel"><div class="panelhead"><h3>School Documents</h3><button class="secondary" id="schoolDocsRefresh" type="button">Refresh</button></div><p id="schoolDocsPermission">Checking your document permissions…</p><div id="schoolDocsCreateArea"></div><div id="schoolDocsList" aria-live="polite">Loading documents…</div></div>`;
+}
+async function enexusLoadSchoolDocs(){
+ const list=document.getElementById('schoolDocsList');if(!list||!authClient||!currentUser)return;
+ const school=currentUser.school_name||'';
+ const adminCheck=await authClient.rpc('enexus_is_district_admin');
+ const isAdmin=!adminCheck.error&&adminCheck.data===true;
+ const canCheck=await authClient.rpc('enexus_can_submit_document',{target_school:school});
+ const canSubmit=!canCheck.error&&canCheck.data===true;
+ const permission=document.getElementById('schoolDocsPermission');
+ if(permission)permission.textContent=canSubmit?'You are authorized to submit documents for '+school+'.':isAdmin?'District Administrator: select a document to manage or use an assigned school record.':'Document submission is unavailable for your current school/verified position.';
+ const create=document.getElementById('schoolDocsCreateArea');
+ if(create)create.innerHTML=canSubmit?`<form id="schoolDocsCreate" class="panel" style="background:#f8fafc;margin:12px 0"><h4>Create school document</h4><div class="formgrid"><div class="formgroup"><label>Document title</label><input name="title" required maxlength="200"></div><div class="formgroup"><label>Document type</label><select name="document_type" required><option>Accomplishment Report</option><option>Program of Work</option><option>Receipt</option><option>Certificate of Completion</option><option>Other</option></select></div><div class="formgroup"><label>Reference number (optional)</label><input name="reference_number"></div><div class="formgroup"><label>Description (no sensitive details)</label><input name="description"></div></div><div class="formactions"><button type="submit">Create document</button></div></form>`:'';
+ const createForm=document.getElementById('schoolDocsCreate');if(createForm)createForm.onsubmit=enexusCreateSchoolDoc;
+ list.textContent='Loading school documents…';
+ const [docs,approvals]=await Promise.all([
+  authClient.from('enexus_transparency_documents').select('id,title,document_type,description,reference_number,school_name,created_by,created_at').order('created_at',{ascending:false}).limit(150),
+  authClient.rpc('enexus_get_school_document_approvals')
+ ]);
+ if(!document.getElementById('schoolDocsList'))return;
+ if(docs.error){list.textContent='Cannot load documents: '+docs.error.message;return;}
+ enexusSchoolDocs=docs.data||[];
+ enexusSchoolApprovals=new Map((approvals.error?[]:(approvals.data||[])).map(a=>[a.document_id,a]));
+ const reviewerSchools=[...new Set(enexusSchoolDocs.map(d=>d.school_name).filter(Boolean))];
+ const reviewerResults=await Promise.all(reviewerSchools.map(target_school=>authClient.rpc('enexus_can_review_document',{target_school})));
+ const reviewerAccess=new Map(reviewerSchools.map((name,i)=>[name,!reviewerResults[i].error&&reviewerResults[i].data===true]));
+ list.innerHTML=enexusSchoolDocs.length?enexusSchoolDocs.map(d=>{
+  const a=enexusSchoolApprovals.get(d.id),own=d.created_by===currentUser.id;
+  const manage=canSubmit&&d.school_name===school&&(own||isAdmin);
+  const status=a?.approval_status||'Draft';
+  const upload=manage&&(!a||status==='Needs Revision');
+  const submit=manage&&(!a||status==='Needs Revision');
+  const review=!!a&&status==='Pending Approval'&&a.submitted_version_id&&a.submitted_by!==currentUser.id&&reviewerAccess.get(d.school_name)===true;
+  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">Upload ${a?'revision':'file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
+ }).join(''):'<div class="empty">No school documents are available.</div>';
+ list.querySelectorAll('[data-school-upload]').forEach(b=>b.onclick=()=>enexusShowSchoolUpload(b.dataset.schoolUpload));
+ list.querySelectorAll('[data-school-submit]').forEach(b=>b.onclick=()=>enexusSubmitSchoolDoc(b.dataset.schoolSubmit));
+ list.querySelectorAll('[data-school-versions]').forEach(b=>b.onclick=()=>enexusShowSchoolVersions(b.dataset.schoolVersions));
+ list.querySelectorAll('[data-school-review]').forEach(b=>b.onclick=()=>enexusShowSchoolReview(b.dataset.schoolReview));
+}
+async function enexusCreateSchoolDoc(e){
+ e.preventDefault();const f=e.target;const b=f.querySelector('button[type=submit]');b.disabled=true;
+ try{
+  const {data:allowed,error:authError}=await authClient.rpc('enexus_can_submit_document',{target_school:currentUser.school_name});
+  if(authError||allowed!==true)throw Error(authError?.message||'Not authorized');
+  const values=Object.fromEntries(new FormData(f));
+  const {error}=await authClient.from('enexus_transparency_documents').insert({...values,school_name:currentUser.school_name,created_by:currentUser.id});
+  if(error)throw error;toast('Document created. Upload a file before submitting.');await enexusLoadSchoolDocs();
+ }catch(err){alert('Document creation failed: '+err.message)}finally{b.disabled=false}
+}
+function enexusShowSchoolUpload(id){
+ const d=enexusSchoolDocs.find(x=>x.id===id),a=enexusSchoolApprovals.get(id),host=document.getElementById('schoolDocDetail-'+id);if(!d||!host)return;
+ if(d.created_by!==currentUser.id&& !isSystemAdmin())return;
+ if(a&&a.approval_status!=='Needs Revision')return;
+ host.innerHTML=`<form class="panel" data-school-upload-form="${esc(id)}" style="background:#f8fafc;margin-top:12px"><label>PDF, JPG or PNG (maximum 20 MB)</label><input name="file" type="file" accept=".pdf,.jpg,.jpeg,.png" required><label>Revision notes (optional)</label><textarea name="remarks" rows="2"></textarea><div class="formactions"><button type="submit">Upload and register version</button></div></form>`;
+ host.querySelector('form').onsubmit=e=>enexusUploadSchoolDoc(e,id);
+}
+async function enexusUploadSchoolDoc(e,id){
+ e.preventDefault();if(enexusDocUploadBusy)return;
+ const d=enexusSchoolDocs.find(x=>x.id===id),f=e.target,file=f.elements.file.files[0];if(!d||!file)return;
+ const ext=file.name.split('.').pop().toLowerCase();
+ const types={pdf:'application/pdf',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png'};
+ if(!types[ext]||file.type!==types[ext]||file.size<1||file.size>20*1024*1024)return alert('Choose a valid PDF/JPG/PNG file up to 20 MB.');
+ const path=d.school_name+'/'+id+'/'+crypto.randomUUID()+'.'+ext;
+ enexusDocUploadBusy=true;const button=f.querySelector('button[type=submit]');button.disabled=true;
+ try{
+  const {error:uploadError}=await authClient.storage.from(enexusSchoolDocsBucket).upload(path,file,{contentType:file.type,upsert:false});
+  if(uploadError)throw uploadError;
+  const {data:version,error:registerError}=await authClient.rpc('enexus_register_school_document_version',{p_document_id:id,p_storage_path:path,p_original_filename:file.name,p_revision_remarks:f.elements.remarks.value||null});
+  if(registerError)throw Error('File uploaded but version registration failed: '+registerError.message+'; storage path for administrator: '+path);
+  toast('Document version '+version+' uploaded. Submit it for approval when ready.');await enexusLoadSchoolDocs();
+ }catch(err){alert('Upload failed: '+err.message)}finally{enexusDocUploadBusy=false;button.disabled=false}
+}
+async function enexusShowSchoolVersions(id){
+ const host=document.getElementById('schoolDocDetail-'+id);if(!host)return;host.textContent='Loading versions…';
+ const {data,error}=await authClient.rpc('enexus_get_school_document_versions',{p_document_id:id});
+ if(error){host.textContent='Cannot load versions: '+error.message;return;}
+ host.innerHTML='<div class="panel" style="margin-top:10px"><strong>Registered versions</strong>'+((data||[]).length?(data||[]).map(v=>`<p>Version ${esc(v.version_number)} — ${esc(v.original_filename||'File')} ${v.revision_remarks?' — '+esc(v.revision_remarks):''}</p>`).join(''):'<p>No registered versions yet.</p>')+'</div>';
+}
+async function enexusSubmitSchoolDoc(id){
+ const a=enexusSchoolApprovals.get(id),revision=a?.approval_status==='Needs Revision';
+ if(!confirm(revision?'Resubmit the latest registered version for approval?':'Submit the latest registered document version for approval?'))return;
+ let args={p_document_id:id},rpc='enexus_submit_school_document';
+ if(revision){const remarks=prompt('Describe the changes made (required):');if(!remarks?.trim())return;rpc='enexus_resubmit_school_document';args.p_remarks=remarks.trim();}
+ const {error}=await authClient.rpc(rpc,args);
+ if(error)return alert('Submission failed: '+error.message);
+ toast(revision?'Revision resubmitted for approval.':'Document submitted for approval.');await enexusLoadSchoolDocs();
+}
+// Reviews are enforced by the existing SECURITY DEFINER RPC, including school scope,
+// exact submitted version, Pending Approval status, and no self-approval.
+function enexusShowSchoolReview(id){
+ const d=enexusSchoolDocs.find(x=>x.id===id),a=enexusSchoolApprovals.get(id),host=document.getElementById('schoolDocDetail-'+id);
+ if(!d||!a||!host||a.approval_status!=='Pending Approval'||a.submitted_by===currentUser.id)return;
+ host.innerHTML=`<form class="panel" style="margin-top:12px;background:#f8fafc"><h4>Review submitted document</h4><p>Review the registered version before making a decision. You cannot approve your own submission.</p><div class="formgroup"><label>Decision</label><select name="decision" required><option value="APPROVE">Approve</option><option value="REJECT">Reject</option><option value="REQUEST REVISION">Request revision</option></select></div><div class="formgroup" style="margin-top:12px"><label>Review remarks (required for rejection or revision)</label><textarea name="remarks" rows="3"></textarea></div><div class="formactions"><button type="button" class="secondary" data-review-cancel>Cancel</button><button type="submit">Save review decision</button></div></form>`;
+ const form=host.querySelector('form');
+ form.querySelector('[data-review-cancel]').onclick=()=>{host.innerHTML='';};
+ form.onsubmit=async e=>{
+  e.preventDefault();const decision=form.elements.decision.value,remarks=form.elements.remarks.value.trim();
+  if(decision!=='APPROVE'&&!remarks)return alert('Remarks are required for rejection or revision.');
+  if(!confirm('Confirm '+decision.toLowerCase()+' for '+d.title+'?'))return;
+  const button=form.querySelector('button[type=submit]');button.disabled=true;
+  try{
+   const {error}=await authClient.rpc('enexus_review_school_document',{p_document_id:id,p_decision:decision,p_remarks:remarks||null});
+   if(error)throw error;
+   toast('Document review saved.');await enexusLoadSchoolDocs();
+  }catch(err){alert('Review failed: '+err.message);}finally{button.disabled=false;}
+ };
+}
+// Override only the Transparency Register page, preserving all other modules.
+transparencyPage=enexusSchoolDocsPage;
+const enexusOriginalLoadCloudModule=loadCloudModule;
+loadCloudModule=async function(p){
+ if(p==='transparency'){
+  const refresh=document.getElementById('schoolDocsRefresh');if(refresh)refresh.onclick=enexusLoadSchoolDocs;
+  return enexusLoadSchoolDocs();
+ }
+ return enexusOriginalLoadCloudModule(p);
+};
 
 initAuth();
 </script>
