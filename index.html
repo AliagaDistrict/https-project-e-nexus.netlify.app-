@@ -86,6 +86,10 @@
 .enexus-district-brandmark img{display:block;width:100%;height:100%;object-fit:contain;border-radius:50%}
 .sidebar .enexus-district-brandmark{width:54px;height:54px}
 .loginbox .enexus-district-brandmark{width:52px;height:52px}
+.enexus-password-wrap{display:block;position:relative;width:100%}
+.enexus-password-wrap input{padding-right:76px!important}
+button.enexus-password-eye{position:absolute;right:5px;top:50%;transform:translateY(-50%);padding:5px 9px;font-size:12px;background:#e8eef5;color:#12345a;border:1px solid #ccd7e2;border-radius:6px;min-width:55px}
+button.enexus-password-eye:focus-visible{outline:2px solid #1e5b91;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -274,6 +278,45 @@ function showPublicLanding(){
  document.getElementById('publicSignIn').onclick=()=>showLogin('login');
  document.getElementById('publicRegister').onclick=()=>showLogin('register');
 }
+// Password visibility controls apply to login, registration, recovery, and future forms.
+function enexusInstallPasswordEyes(){
+ document.querySelectorAll('input[type="password"],input[data-enexus-password-eye]').forEach(input=>{
+  if(input.dataset.enexusPasswordEye)return;
+  input.dataset.enexusPasswordEye='1';
+  const wrap=document.createElement('span');
+  wrap.className='enexus-password-wrap';
+  input.parentNode.insertBefore(wrap,input);
+  wrap.appendChild(input);
+  const btn=document.createElement('button');
+  btn.type='button';btn.className='enexus-password-eye';
+  btn.setAttribute('aria-label','Show password');btn.setAttribute('aria-pressed','false');
+  btn.textContent='Show';
+  btn.addEventListener('click',()=>{
+   const visible=input.type==='text';input.type=visible?'password':'text';
+   btn.textContent=visible?'Show':'Hide';
+   btn.setAttribute('aria-label',visible?'Show password':'Hide password');
+   btn.setAttribute('aria-pressed',String(!visible));
+  });
+  wrap.appendChild(btn);
+ });
+}
+const enexusPasswordObserver=new MutationObserver(()=>enexusInstallPasswordEyes());
+if(document.body)enexusPasswordObserver.observe(document.body,{childList:true,subtree:true});
+
+async function enexusRequestPasswordReset(email,button,onStatus){
+ if(!authClient){onStatus('Authentication is not ready. Please refresh and try again.');return;}
+ const address=String(email||'').trim().toLowerCase();
+ if(!address){onStatus('Please enter your registered email address.');return;}
+ if(button)button.disabled=true;
+ try{
+  const {error}=await authClient.auth.resetPasswordForEmail(address,{
+   redirectTo:'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/'
+  });
+  if(error)throw error;
+  onStatus('If this email is registered, a password-reset link will be sent. Check your inbox and spam folder.');
+ }catch(err){onStatus('Could not send the reset email: '+(err?.message||'Please try again.'));}
+ finally{if(button)button.disabled=false;}
+}
 function showLogin(mode='login', message=''){
  document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.remove('active'));
  $('#pageTitle').textContent='Sign in';
@@ -295,10 +338,14 @@ function showLogin(mode='login', message=''){
    <div class="formgroup"><label>Password</label><input name="password" type="password" autocomplete="${isRegister?'new-password':'current-password'}" minlength="8" required></div>
    <button id="authSubmit" type="submit" style="width:100%;margin-top:5px">${isRegister?'Submit registration request':'Sign in'}</button>
   </form>
+  ${!isRegister?'<p style="margin:12px 0 0;text-align:center"><a href="#" id="authForgot">Forgot password?</a></p>':''}
   <p style="margin:16px 0 0;text-align:center">${isRegister?'Already registered?':'Need an account?'} <a href="#" id="authSwitch">${isRegister?'Sign in':'Request registration'}</a></p>
   <div class="demoaccount">Access is granted only after an administrator approves your account. Do not use this site for confidential records until the database and access policies are configured.</div>
  </div>`;
  $('#authSwitch').onclick=e=>{e.preventDefault();showLogin(isRegister?'login':'register')};
+ const forgot=document.getElementById('authForgot');
+ if(forgot)forgot.onclick=e=>{e.preventDefault();showForgotPassword();};
+ enexusInstallPasswordEyes();
  const closeAuth=document.getElementById('authClose');
  if(closeAuth){closeAuth.style.display='';closeAuth.onclick=()=>{if(isRegister){showLogin('login');}else{showPublicLanding();}};}
  if(isRegister){
@@ -351,11 +398,44 @@ async function loadAuthenticatedUser(authUser){
  if(document.getElementById('authOverlay'))document.getElementById('authOverlay').remove();
  page=enexusRestorePage();render();
 }
-function showPasswordRecovery(){
+function showForgotPassword(message=''){
  let overlay=document.getElementById('authOverlay');
  if(!overlay){overlay=document.createElement('div');overlay.id='authOverlay';overlay.className='loginoverlay';document.body.appendChild(overlay);}
- overlay.innerHTML=`<div class="loginbox"><h2>Choose a new password</h2><p>Enter a new password for your Project e-NEXUS account.</p><form id="recoveryForm"><div class="formgroup"><label>New password (minimum 8 characters)</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><div class="formgroup"><label>Confirm new password</label><input name="confirm" type="password" minlength="8" autocomplete="new-password" required></div><button type="submit">Update password</button></form><div id="recoveryStatus" class="notice" style="display:none;margin-top:12px"></div></div>`;
- document.getElementById('recoveryForm').onsubmit=async e=>{e.preventDefault();const f=e.target,p=f.elements.password.value,c=f.elements.confirm.value,status=document.getElementById('recoveryStatus');if(p!==c){status.textContent='Passwords do not match.';status.style.display='block';return;}const btn=f.querySelector('button');btn.disabled=true;const {error}=await authClient.auth.updateUser({password:p});btn.disabled=false;if(error){status.textContent='Password update failed: '+error.message;status.style.display='block';return;}await authClient.auth.signOut();currentUser=null;showLogin('login','Password updated. Sign in with your new password.');};
+ overlay.innerHTML=`<div class="loginbox"><h2>Reset your password</h2><p>Enter the email address used for your Project e-NEXUS account. You will receive a secure link to set a new password.</p><form id="forgotForm"><div class="formgroup"><label for="forgotEmail">Registered email</label><input id="forgotEmail" name="email" type="email" autocomplete="email" required></div><button type="submit" id="forgotSubmit">Send reset link</button></form><div id="forgotStatus" class="notice" role="status" style="display:${message?'block':'none'};margin-top:12px">${esc(message)}</div><p style="margin-top:16px"><a href="#" id="forgotBack">Back to sign in</a></p></div>`;
+ document.getElementById('forgotBack').onclick=e=>{e.preventDefault();showLogin('login');};
+ document.getElementById('forgotForm').onsubmit=async e=>{
+  e.preventDefault();
+  const form=e.currentTarget,btn=document.getElementById('forgotSubmit'),status=document.getElementById('forgotStatus');
+  await enexusRequestPasswordReset(form.elements.email.value,btn,msg=>{status.textContent=msg;status.style.display='block';});
+ };
+}
+let enexusPasswordRecoveryActive=false;
+function showPasswordRecovery(){
+ enexusPasswordRecoveryActive=true;
+ let overlay=document.getElementById('authOverlay');
+ if(!overlay){overlay=document.createElement('div');overlay.id='authOverlay';overlay.className='loginoverlay';document.body.appendChild(overlay);}
+ overlay.innerHTML=`<div class="loginbox"><h2>Choose a new password</h2><p>Enter a new password for your Project e-NEXUS account. Use at least 8 characters.</p><form id="recoveryForm"><div class="formgroup"><label>New password</label><input name="password" type="password" minlength="8" autocomplete="new-password" required></div><div class="formgroup"><label>Confirm new password</label><input name="confirm" type="password" minlength="8" autocomplete="new-password" required></div><button type="submit" id="recoverySubmit">Update password</button></form><div id="recoveryStatus" class="notice" role="status" style="display:none;margin-top:12px"></div></div>`;
+ enexusInstallPasswordEyes();
+ document.getElementById('recoveryForm').onsubmit=async e=>{
+  e.preventDefault();
+  const f=e.currentTarget,p=f.elements.password.value,c=f.elements.confirm.value,status=document.getElementById('recoveryStatus');
+  const show=msg=>{status.textContent=msg;status.style.display='block';};
+  if(p.length<8)return show('Use a password of at least 8 characters.');
+  if(p!==c)return show('Passwords do not match.');
+  const btn=document.getElementById('recoverySubmit');btn.disabled=true;
+  try{
+   const {data:sessionData,error:sessionError}=await authClient.auth.getSession();
+   if(sessionError||!sessionData?.session)throw new Error('Your reset link is invalid or has expired. Request a new password-reset email.');
+   const {error}=await authClient.auth.updateUser({password:p});
+   if(error)throw error;
+   enexusPasswordRecoveryActive=false;
+   await authClient.auth.signOut();
+   currentUser=null;
+   history.replaceState(null,'',location.pathname);
+   showLogin('login','Password updated successfully. Sign in with your new password.');
+  }catch(err){show('Password update failed: '+(err?.message||'Please request a new reset link.'));}
+  finally{btn.disabled=false;}
+ };
 }
 async function initAuth(){
  // Replace these two placeholders with your project's URL and publishable key.
@@ -369,11 +449,20 @@ async function initAuth(){
    authClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
    const {data,error}=await authClient.auth.getSession();
    if(error)throw error;
-   if(data.session)await loadAuthenticatedUser(data.session.user);else showLogin();
+   const isRecoveryLink=new URLSearchParams(location.hash.replace(/^#/, '')).get('type')==='recovery'
+      ||new URLSearchParams(location.search).get('type')==='recovery';
+   if(isRecoveryLink && data.session)showPasswordRecovery();
+   else if(data.session)await loadAuthenticatedUser(data.session.user);
+   else showLogin();
    authClient.auth.onAuthStateChange((event,session)=>{
      if(event==='PASSWORD_RECOVERY'){currentUser=null;showPasswordRecovery();}
-      else if(event==='SIGNED_OUT'){currentUser=null;showLogin();}
-     else if(event==='SIGNED_IN'&&session?.user){setTimeout(()=>loadAuthenticatedUser(session.user),0);}
+     else if(event==='SIGNED_OUT'){
+       currentUser=null;
+       if(!enexusPasswordRecoveryActive && !document.getElementById('authOverlay'))showLogin();
+     }
+     else if(event==='SIGNED_IN'&&session?.user && !enexusPasswordRecoveryActive){
+       setTimeout(()=>{if(!enexusPasswordRecoveryActive)loadAuthenticatedUser(session.user);},0);
+     }
    });
  }catch(err){currentUser=null;showLogin('login','Supabase setup failed: '+(err.message||'check your project URL and publishable key.'));}
 }
@@ -403,11 +492,7 @@ async function loadUsersDirectory(){
    const u=users.find(x=>x.id===btn.dataset.resetUser);
    if(!u?.email)return toast('This account has no email address.');
    if(!confirm('Send a password-reset email to '+u.email+'? The account holder will set their own new password.'))return;
-   btn.disabled=true;
-   const {error}=await authClient.auth.resetPasswordForEmail(u.email,{redirectTo:'https://aliagadistrict.github.io/https-project-e-nexus.netlify.app-/'});
-   btn.disabled=false;
-   if(error)return toast('Reset request failed: '+error.message);
-   toast('Password reset requested. Ask the account holder to check their email.');
+   await enexusRequestPasswordReset(u.email,btn,msg=>toast(msg));
  });
  host.querySelectorAll('[data-save-user]').forEach(btn=>btn.onclick=async()=>{const id=btn.dataset.saveUser;const select=host.querySelector(`[data-user-role="${id}"]`);const role=select?.value;if(!role)return;btn.disabled=true;btn.disabled=false;toast('Role changes are locked for security. Use an authorized administrator role-assignment workflow.');loadUsersDirectory();});
  host.querySelectorAll('[data-toggle-user]').forEach(btn=>btn.onclick=async()=>{
