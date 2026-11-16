@@ -1123,13 +1123,16 @@ async function enexusLoadSchoolDocs(){
  if(create)create.innerHTML=canSubmit?`<form id="schoolDocsCreate" class="panel" style="background:#f8fafc;margin:12px 0"><h4>Create school document</h4><div class="formgrid"><div class="formgroup"><label>Document title</label><input name="title" required maxlength="200"></div><div class="formgroup"><label>Document type</label><select name="document_type" required><option>Accomplishment Report</option><option>Program of Work</option><option>Receipt</option><option>Certificate of Completion</option><option>Other</option></select></div><div class="formgroup"><label>Reference number (optional)</label><input name="reference_number"></div><div class="formgroup"><label>Description (no sensitive details)</label><input name="description"></div></div><div class="formactions"><button type="submit">Create document</button></div></form>`:'';
  const createForm=document.getElementById('schoolDocsCreate');if(createForm)createForm.onsubmit=enexusCreateSchoolDoc;
  list.textContent='Loading school documents…';
- const [docs,approvals]=await Promise.all([
+ const [docs,approvals,hidden]=await Promise.all([
   authClient.from('enexus_transparency_documents').select('id,title,document_type,description,reference_number,school_name,created_by,created_at').order('created_at',{ascending:false}).limit(150),
-  authClient.rpc('enexus_get_school_document_approvals')
+  authClient.rpc('enexus_get_school_document_approvals'),
+  authClient.rpc('enexus_get_hidden_document_ids')
  ]);
  if(!document.getElementById('schoolDocsList'))return;
  if(docs.error){list.textContent='Cannot load documents: '+docs.error.message;return;}
- enexusSchoolDocs=docs.data||[];
+ if(hidden.error){list.textContent='Cannot check removed documents: '+hidden.error.message;return;}
+ const hiddenIds=new Set((hidden.data||[]).map(x=>x.document_id));
+ enexusSchoolDocs=(docs.data||[]).filter(x=>!hiddenIds.has(x.id));
  enexusSchoolApprovals=new Map((approvals.error?[]:(approvals.data||[])).map(a=>[a.document_id,a]));
  const reviewerSchools=[...new Set(enexusSchoolDocs.map(d=>d.school_name).filter(Boolean))];
  const reviewerResults=await Promise.all(reviewerSchools.map(target_school=>authClient.rpc('enexus_can_review_document',{target_school})));
@@ -1140,22 +1143,26 @@ async function enexusLoadSchoolDocs(){
   const status=a?.approval_status||'Draft';
   const upload=manage&&(!a||status==='Needs Revision');
   const submit=manage&&(!a||status==='Needs Revision');
-  const canDeleteDraft=(isAdmin||manage)&&!a;
+  const isPDO=['PDO I','Project Development Officer I'].includes(String(currentUser.position_in_school||''));
+  const canRemove=isAdmin||(canSubmit&&d.school_name===school&&(own||isPDO));
   const review=!!a&&status==='Pending Approval'&&a.submitted_version_id&&a.submitted_by!==currentUser.id&&reviewerAccess.get(d.school_name)===true;
-  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">${a?'Upload corrected version':'Upload / correct file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}${canDeleteDraft?`<button class="danger" type="button" data-school-delete="${esc(d.id)}">Delete empty draft</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
+  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">${a?'Upload corrected version':'Upload / correct file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}${canRemove?`<button class="danger" type="button" data-school-remove="${esc(d.id)}">Delete</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
  }).join(''):'<div class="empty">No school documents are available.</div>';
  list.querySelectorAll('[data-school-upload]').forEach(b=>b.onclick=()=>enexusShowSchoolUpload(b.dataset.schoolUpload));
  list.querySelectorAll('[data-school-submit]').forEach(b=>b.onclick=()=>enexusSubmitSchoolDoc(b.dataset.schoolSubmit));
  list.querySelectorAll('[data-school-versions]').forEach(b=>b.onclick=()=>enexusShowSchoolVersions(b.dataset.schoolVersions));
- list.querySelectorAll('[data-school-delete]').forEach(b=>b.onclick=()=>enexusDeleteEmptySchoolDoc(b.dataset.schoolDelete));
+ list.querySelectorAll('[data-school-remove]').forEach(b=>b.onclick=()=>enexusRemoveSchoolDoc(b.dataset.schoolRemove));
  list.querySelectorAll('[data-school-review]').forEach(b=>b.onclick=()=>enexusShowSchoolReview(b.dataset.schoolReview));
 }
-async function enexusDeleteEmptySchoolDoc(id){
+async function enexusRemoveSchoolDoc(id){
  const d=enexusSchoolDocs.find(x=>x.id===id);if(!d)return;
- if(!confirm('Permanently delete EMPTY draft "'+d.title+'"? Documents with uploaded versions or approval history cannot be deleted here.'))return;
- const {error}=await authClient.rpc('enexus_delete_empty_school_document',{p_document_id:id});
- if(error)return alert('Delete unavailable: '+error.message);
- toast('Empty draft deleted.');await enexusLoadSchoolDocs();
+ const reason=prompt('Reason for removing "'+d.title+'" from the active Transparency Register (required):');
+ if(reason===null)return;
+ if(reason.trim().length<5)return alert('Please enter a reason of at least 5 characters.');
+ if(!confirm('Remove "'+d.title+'" from the active register? Its uploaded files, versions and approval history will be RETAINED for audit.'))return;
+ const {error}=await authClient.rpc('enexus_hide_school_document',{p_document_id:id,p_reason:reason.trim()});
+ if(error)return alert('Delete unavailable: '+error.message+'\nInstall the companion Supabase SQL first.');
+ toast('Document removed from active register; audit history preserved.');await enexusLoadSchoolDocs();
 }
 async function enexusCreateSchoolDoc(e){
  e.preventDefault();const f=e.target;const b=f.querySelector('button[type=submit]');b.disabled=true;
