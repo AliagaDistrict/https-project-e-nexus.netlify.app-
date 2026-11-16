@@ -198,11 +198,11 @@ const ENEXUS_ADMIN_ONLY_PAGES=new Set(['dashboard','activities','updates','trans
 const ENEXUS_ICT_PAGES=new Set(['monitoring','records']);
 function isSystemAdmin(){return currentUser?.role==='Administrator';}
 function isICTCoordinator(){return !!currentUser && !isSystemAdmin() && (currentUser.role==='ICT Coordinator Moderator'||(currentUser.role==='School Personnel'&&currentUser.position_in_school==='ICT Coordinator'));}
-function canViewPage(p){if(isSystemAdmin())return true;if(enexusIsAliagaAssistant()&&p==='records')return true;if(isICTCoordinator())return ENEXUS_ICT_PAGES.has(p);if(ENEXUS_ICT_PAGES.has(p))return false;if(ENEXUS_ADMIN_ONLY_PAGES.has(p))return false;return ['projects','documents','community','announcements','orgchart','reports'].includes(p);}
+function canViewPage(p){if(isSystemAdmin())return true;if(enexusCanAccessSchoolRecords()&&p==='records')return true;if(isICTCoordinator())return ENEXUS_ICT_PAGES.has(p);if(ENEXUS_ICT_PAGES.has(p))return false;if(ENEXUS_ADMIN_ONLY_PAGES.has(p))return false;return ['projects','documents','community','announcements','orgchart','reports'].includes(p);}
 function canEditMonitoring(){return isSystemAdmin();}
 function canEditTracing(){return isSystemAdmin() || (currentUser?.role==='Program Coordinator') || (currentUser?.role==='ICT Coordinator Moderator') || (currentUser?.position_in_school==='Program Coordinator' && currentUser?.role==='School Personnel') || (currentUser?.position_in_school==='ICT Coordinator' && currentUser?.role==='School Personnel');}
 function requireModuleEdit(kind){if(kind==='monitoring'&&!canEditMonitoring()){toast('Only the District System Administrator can edit Monitoring & Evaluation.');return false;}if(kind==='documents'&&!canEditTracing()){toast('Only the Administrator, Program Coordinator, or ICT Coordinator can edit Document Tracing.');return false;}return true;}
-function schoolScopedRows(rows){if(!isICTCoordinator()&&!enexusIsAliagaAssistant())return rows;return rows.filter(r=>r.school_name && r.school_name===currentUser.school_name);}
+function schoolScopedRows(rows){if(!isICTCoordinator()&&!enexusCanAccessSchoolRecords())return rows;return rows.filter(r=>r.school_name && r.school_name===currentUser.school_name);}
 function setPage(p){closeModal();if(!currentUser){showLogin();return}if(!canViewPage(p)){toast('This section is not available for your account.');return}page=p;query='';enexusRememberPage();document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));render()}
 document.querySelectorAll('.navbtn[data-page]').forEach(b=>b.addEventListener('click',()=>setPage(b.dataset.page)));
 function render(){
@@ -216,7 +216,7 @@ function render(){
  let titles={dashboard:'Dashboard',projects:'Projects & Programs',monitoring:'Monitoring & Evaluation',reports:'Reports',documents:'Document Tracing',records:'Records & Retrieval',settings:'Settings & Data',activities:'Activities & Calendar',community:'Partner Chat',users:'Users & Access',announcements:'Announcements',orgchart:'Organizational Chart',updates:'Project Status Updates',transparency:'Transparency Register'};
  $('#pageTitle').textContent=titles[page]||'Projects & Programs';
  let f={dashboard:dashboardPage,projects:projectsPage,monitoring:monitorPage,reports:reportsPage,documents:documentsPage,records:recordsPage,settings:settingsPage,activities:activitiesPage,community:communityPage,users:usersPage,announcements:announcementsPage,orgchart:orgchartPage,updates:updatesPage,transparency:transparencyPage};
- $('#content').innerHTML=(page==='monitoring'&&isICTCoordinator())?ictMonitoringPage():(page==='records'&&(isICTCoordinator()||enexusIsAliagaAssistant()))?ictRecordsPage():f[page]();
+ $('#content').innerHTML=(page==='monitoring'&&isICTCoordinator())?ictMonitoringPage():(page==='records'&&(isICTCoordinator()||enexusCanAccessSchoolRecords()))?ictRecordsPage():f[page]();
  wire();
  if(page==='users')loadUsersDirectory();
  if(['announcements','updates','transparency'].includes(page))loadCloudModule(page);
@@ -851,7 +851,9 @@ const enexusFileProjects=()=>db.projects.filter(p=>String(p.id).startsWith('CLOU
 const enexusFileCanManage=()=>['Administrator','School Administrator','Project Coordinator','ICT Coordinator Moderator'].includes(currentUser?.role);
 // Approved Administrative Assistants II/III may upload only for their registered Aliaga Central School.
 const enexusIsAliagaAssistant=()=>currentUser?.approved===true && currentUser?.account_status==='Approved' && currentUser?.access_revoked!==true && currentUser?.school_name==='ALIAGA CENTRAL SCHOOL' && currentUser?.role==='School Personnel' && ['Administrative Assistant II','Administrative Assistant III'].includes(String(currentUser?.position_in_school||'').trim());
-const enexusFileCanUpload=()=>enexusFileCanManage()||enexusIsAliagaAssistant();
+const enexusIsSchoolAdministrativeOfficer=()=>currentUser?.approved===true && currentUser?.account_status==='Approved' && currentUser?.access_revoked!==true && !!currentUser?.school_name && ['Administrative Officer II','Administrative Officer III','Administrative Officer','School Moderator'].includes(String(currentUser?.position_in_school||'').trim()) && currentUser?.role==='School Personnel';
+const enexusCanAccessSchoolRecords=()=>enexusIsAliagaAssistant()||enexusIsSchoolAdministrativeOfficer();
+const enexusFileCanUpload=()=>enexusFileCanManage()||enexusCanAccessSchoolRecords();
 function enexusFilePanel(){
  const projects=enexusFileProjects().filter(p=>isSystemAdmin()||p.school_name===currentUser?.school_name);
  if(!projects.length)return `<section class="panel" style="margin-top:20px"><h3>Project Attachments</h3><p class="sectiondesc">No shared Supabase projects are available to your account. Project attachments require a linked project.</p></section>`;
@@ -958,7 +960,7 @@ function districtFilesPanel(){
 const districtOriginalRecordsPage=recordsPage;
 recordsPage=function(){return districtOriginalRecordsPage()+districtFilesPanel();};
 const districtOriginalIctRecordsPage=ictRecordsPage;
-ictRecordsPage=function(){return districtOriginalIctRecordsPage()+(enexusIsAliagaAssistant()?'<p class="sectiondesc" style="margin-top:18px">Administrative Assistants II/III may submit school project documents when the School Moderator is unavailable. Choose an existing Aliaga Central School project below. Uploads require Supabase authorization.</p>':'')+districtFilesPanel();};
+ictRecordsPage=function(){return districtOriginalIctRecordsPage()+(enexusCanAccessSchoolRecords()?'<p class="sectiondesc" style="margin-top:18px">Approved Administrative Officers and eligible Administrative Assistants may upload documents linked to projects in their registered school. Supabase authorization is required.</p>':'')+districtFilesPanel();};
 function districtMountFiles(){
  const host=document.getElementById('districtFileManager');if(!host)return;
  const school=document.getElementById('districtFileSchool');school.onchange=()=>{districtFileSchool=school.value;render();};
