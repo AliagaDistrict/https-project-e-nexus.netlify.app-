@@ -1191,7 +1191,7 @@ async function enexusSubmitSchoolDoc(id){
  const a=enexusSchoolApprovals.get(id),revision=a?.approval_status==='Needs Revision';
  if(!confirm(revision?'Resubmit the latest registered version for approval?':'Submit the latest registered document version for approval?'))return;
  let args={p_document_id:id},rpc='enexus_submit_school_document';
- if(revision){const remarks=prompt('Describe the changes made (required):');if(!remarks?.trim())return;rpc='enexus_resubmit_school_document';args.p_remarks=remarks.trim();}
+ if(revision){rpc='enexus_resubmit_school_document';args.p_remarks='Corrected document version uploaded for review.';}
  const {error}=await authClient.rpc(rpc,args);
  if(error)return alert('Submission failed: '+error.message);
  toast(revision?'Revision resubmitted for approval.':'Document submitted for approval.');await enexusLoadSchoolDocs();
