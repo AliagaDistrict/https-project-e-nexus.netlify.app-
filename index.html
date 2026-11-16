@@ -1140,13 +1140,22 @@ async function enexusLoadSchoolDocs(){
   const status=a?.approval_status||'Draft';
   const upload=manage&&(!a||status==='Needs Revision');
   const submit=manage&&(!a||status==='Needs Revision');
+  const canDeleteDraft=(isAdmin||manage)&&!a;
   const review=!!a&&status==='Pending Approval'&&a.submitted_version_id&&a.submitted_by!==currentUser.id&&reviewerAccess.get(d.school_name)===true;
-  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">${a?'Upload corrected version':'Upload / correct file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
+  return `<div class="timelineitem" style="display:block;margin:12px 0"><strong>${esc(d.title)}</strong><p>${esc(d.document_type||'Document')} · ${esc(d.school_name||'')} · ${esc(d.reference_number||'No reference')}</p><p>Status: <strong>${esc(status)}</strong>${a?.review_remarks?' · Reviewer remarks: '+esc(a.review_remarks):''}</p><div class="actions"><button class="secondary" type="button" data-school-versions="${esc(d.id)}">Versions</button>${upload?`<button type="button" data-school-upload="${esc(d.id)}">${a?'Upload corrected version':'Upload / correct file'}</button>`:''}${submit?`<button type="button" class="secondary" data-school-submit="${esc(d.id)}">${a?'Resubmit for approval':'Submit for approval'}</button>`:''}${review?`<button type="button" data-school-review="${esc(d.id)}">Review document</button>`:''}${canDeleteDraft?`<button class="danger" type="button" data-school-delete="${esc(d.id)}">Delete empty draft</button>`:''}</div><div id="schoolDocDetail-${esc(d.id)}"></div></div>`;
  }).join(''):'<div class="empty">No school documents are available.</div>';
  list.querySelectorAll('[data-school-upload]').forEach(b=>b.onclick=()=>enexusShowSchoolUpload(b.dataset.schoolUpload));
  list.querySelectorAll('[data-school-submit]').forEach(b=>b.onclick=()=>enexusSubmitSchoolDoc(b.dataset.schoolSubmit));
  list.querySelectorAll('[data-school-versions]').forEach(b=>b.onclick=()=>enexusShowSchoolVersions(b.dataset.schoolVersions));
+ list.querySelectorAll('[data-school-delete]').forEach(b=>b.onclick=()=>enexusDeleteEmptySchoolDoc(b.dataset.schoolDelete));
  list.querySelectorAll('[data-school-review]').forEach(b=>b.onclick=()=>enexusShowSchoolReview(b.dataset.schoolReview));
+}
+async function enexusDeleteEmptySchoolDoc(id){
+ const d=enexusSchoolDocs.find(x=>x.id===id);if(!d)return;
+ if(!confirm('Permanently delete EMPTY draft "'+d.title+'"? Documents with uploaded versions or approval history cannot be deleted here.'))return;
+ const {error}=await authClient.rpc('enexus_delete_empty_school_document',{p_document_id:id});
+ if(error)return alert('Delete unavailable: '+error.message);
+ toast('Empty draft deleted.');await enexusLoadSchoolDocs();
 }
 async function enexusCreateSchoolDoc(e){
  e.preventDefault();const f=e.target;const b=f.querySelector('button[type=submit]');b.disabled=true;
